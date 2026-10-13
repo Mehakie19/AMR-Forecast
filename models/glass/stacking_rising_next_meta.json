@@ -1,0 +1,7 @@
+{
+  "threshold": 0.33999999999999997,
+  "target": "rising_next",
+  "config": "glass",
+  "far_cap": 0.2,
+  "best_params": {}
+}

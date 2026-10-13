@@ -1,0 +1,211 @@
+{
+  "best_params": {
+    "n_estimators": 100,
+    "max_depth": 3,
+    "min_samples_leaf": 4,
+    "max_features": "sqrt"
+  },
+  "best_value": 0.2684234673896394,
+  "trials": [
+    {
+      "number": 0,
+      "value": 0.2558327421093098,
+      "n_estimators": 150,
+      "max_depth": 10,
+      "min_samples_leaf": 8,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 1,
+      "value": 0.2574145870285715,
+      "n_estimators": 100,
+      "max_depth": 3,
+      "min_samples_leaf": 9,
+      "max_features": "log2"
+    },
+    {
+      "number": 2,
+      "value": 0.25713676228157833,
+      "n_estimators": 100,
+      "max_depth": 10,
+      "min_samples_leaf": 9,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 3,
+      "value": 0.26497577667905636,
+      "n_estimators": 100,
+      "max_depth": 5,
+      "min_samples_leaf": 6,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 4,
+      "value": 0.24552181995928798,
+      "n_estimators": 200,
+      "max_depth": 4,
+      "min_samples_leaf": 3,
+      "max_features": "log2"
+    },
+    {
+      "number": 5,
+      "value": 0.26214199414460226,
+      "n_estimators": 250,
+      "max_depth": 4,
+      "min_samples_leaf": 6,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 6,
+      "value": 0.2476134200128845,
+      "n_estimators": 200,
+      "max_depth": 4,
+      "min_samples_leaf": 1,
+      "max_features": "log2"
+    },
+    {
+      "number": 7,
+      "value": 0.2622618699628835,
+      "n_estimators": 250,
+      "max_depth": 5,
+      "min_samples_leaf": 1,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 8,
+      "value": 0.23558694074814876,
+      "n_estimators": 100,
+      "max_depth": 6,
+      "min_samples_leaf": 1,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 9,
+      "value": 0.2610117846748891,
+      "n_estimators": 200,
+      "max_depth": 5,
+      "min_samples_leaf": 6,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 10,
+      "value": 0.2514780603900121,
+      "n_estimators": 150,
+      "max_depth": 8,
+      "min_samples_leaf": 4,
+      "max_features": "log2"
+    },
+    {
+      "number": 11,
+      "value": 0.25079807425747874,
+      "n_estimators": 250,
+      "max_depth": 7,
+      "min_samples_leaf": 4,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 12,
+      "value": 0.24684163826371855,
+      "n_estimators": 150,
+      "max_depth": 6,
+      "min_samples_leaf": 7,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 13,
+      "value": 0.2612726129393605,
+      "n_estimators": 250,
+      "max_depth": 6,
+      "min_samples_leaf": 3,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 14,
+      "value": 0.247454603201046,
+      "n_estimators": 200,
+      "max_depth": 8,
+      "min_samples_leaf": 5,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 15,
+      "value": 0.26072662782733486,
+      "n_estimators": 150,
+      "max_depth": 5,
+      "min_samples_leaf": 10,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 16,
+      "value": 0.2619368862531905,
+      "n_estimators": 250,
+      "max_depth": 3,
+      "min_samples_leaf": 2,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 17,
+      "value": 0.26497577667905636,
+      "n_estimators": 100,
+      "max_depth": 5,
+      "min_samples_leaf": 6,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 18,
+      "value": 0.25510833634321267,
+      "n_estimators": 100,
+      "max_depth": 7,
+      "min_samples_leaf": 7,
+      "max_features": "log2"
+    },
+    {
+      "number": 19,
+      "value": 0.2515255252288243,
+      "n_estimators": 100,
+      "max_depth": 7,
+      "min_samples_leaf": 6,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 20,
+      "value": 0.2622096776860562,
+      "n_estimators": 100,
+      "max_depth": 5,
+      "min_samples_leaf": 5,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 21,
+      "value": 0.26011249449359997,
+      "n_estimators": 150,
+      "max_depth": 5,
+      "min_samples_leaf": 7,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 22,
+      "value": 0.26360106729906435,
+      "n_estimators": 150,
+      "max_depth": 4,
+      "min_samples_leaf": 5,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 23,
+      "value": 0.26468839516182496,
+      "n_estimators": 150,
+      "max_depth": 4,
+      "min_samples_leaf": 4,
+      "max_features": "sqrt"
+    },
+    {
+      "number": 24,
+      "value": 0.2684234673896394,
+      "n_estimators": 100,
+      "max_depth": 3,
+      "min_samples_leaf": 4,
+      "max_features": "sqrt"
+    }
+  ]
+}

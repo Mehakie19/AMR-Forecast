@@ -1,0 +1,83 @@
+{
+  "glass": {
+    "source_name": "GLASS-AMR",
+    "rows": 2394,
+    "series": 399,
+    "countries": 31,
+    "years": [
+      2018,
+      2023
+    ],
+    "pathogens": [
+      "Acinetobacter spp.",
+      "Escherichia coli",
+      "Klebsiella pneumoniae"
+    ],
+    "antibiotics": [
+      "Amikacin",
+      "Ceftazidime",
+      "Ceftriaxone",
+      "Ciprofloxacin",
+      "Colistin",
+      "Ertapenem",
+      "Gentamicin",
+      "Imipenem",
+      "Meropenem"
+    ],
+    "n_lt_30_share": 0.05304928989139515
+  },
+  "ecdc": {
+    "source_name": "ECDC-EARSNet(Zenodo)",
+    "rows": 4240,
+    "series": 322,
+    "countries": 27,
+    "years": [
+      1999,
+      2019
+    ],
+    "pathogens": [
+      "Acinetobacter spp.",
+      "Escherichia coli",
+      "Klebsiella pneumoniae"
+    ],
+    "antibiotics": [
+      "Amikacin",
+      "Ceftazidime",
+      "Ceftriaxone",
+      "Ciprofloxacin",
+      "Colistin",
+      "Ertapenem",
+      "Gentamicin",
+      "Imipenem",
+      "Meropenem"
+    ],
+    "n_lt_30_share": 0.0
+  },
+  "combined": {
+    "source_name": "Combined (GLASS-AMR + ECDC-EARSNet)",
+    "rows": 6634,
+    "series": 721,
+    "countries": 57,
+    "years": [
+      1999,
+      2023
+    ],
+    "pathogens": [
+      "Acinetobacter spp.",
+      "Escherichia coli",
+      "Klebsiella pneumoniae"
+    ],
+    "antibiotics": [
+      "Amikacin",
+      "Ceftazidime",
+      "Ceftriaxone",
+      "Ciprofloxacin",
+      "Colistin",
+      "Ertapenem",
+      "Gentamicin",
+      "Imipenem",
+      "Meropenem"
+    ],
+    "n_lt_30_share": 0.019143804642749472
+  }
+}

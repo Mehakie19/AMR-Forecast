@@ -1,0 +1,115 @@
+{
+  "best_params": {
+    "learning_rate": 0.02499671695436446,
+    "max_depth": 3,
+    "reg_lambda": 1.6257323031351276
+  },
+  "best_value": -6.386113229013349,
+  "trials": [
+    {
+      "number": 0,
+      "value": -6.643841412743631,
+      "learning_rate": 0.030710573677773714,
+      "max_depth": 5,
+      "reg_lambda": 1.752410111812814
+    },
+    {
+      "number": 1,
+      "value": -6.602396822617827,
+      "learning_rate": 0.060099747183803134,
+      "max_depth": 2,
+      "reg_lambda": 0.18408992080552522
+    },
+    {
+      "number": 2,
+      "value": -7.181095295770509,
+      "learning_rate": 0.011900590783184251,
+      "max_depth": 5,
+      "reg_lambda": 1.0502105436744276
+    },
+    {
+      "number": 3,
+      "value": -6.578419939701835,
+      "learning_rate": 0.08341106432362087,
+      "max_depth": 2,
+      "reg_lambda": 4.44475416669081
+    },
+    {
+      "number": 4,
+      "value": -6.751693362932732,
+      "learning_rate": 0.12106896936002161,
+      "max_depth": 2,
+      "reg_lambda": 0.20366442026830908
+    },
+    {
+      "number": 5,
+      "value": -6.547162018970166,
+      "learning_rate": 0.017322667470546258,
+      "max_depth": 3,
+      "reg_lambda": 0.7790143126276238
+    },
+    {
+      "number": 6,
+      "value": -6.393289348441419,
+      "learning_rate": 0.03647316284911211,
+      "max_depth": 3,
+      "reg_lambda": 1.0952662748632551
+    },
+    {
+      "number": 7,
+      "value": -6.664080726731219,
+      "learning_rate": 0.01518747922672247,
+      "max_depth": 3,
+      "reg_lambda": 0.41921593504109744
+    },
+    {
+      "number": 8,
+      "value": -6.580411568208545,
+      "learning_rate": 0.03920673972242137,
+      "max_depth": 5,
+      "reg_lambda": 0.21839352923182975
+    },
+    {
+      "number": 9,
+      "value": -6.570642266516186,
+      "learning_rate": 0.04666963767236924,
+      "max_depth": 4,
+      "reg_lambda": 0.11992724522955164
+    },
+    {
+      "number": 10,
+      "value": -6.802677631570286,
+      "learning_rate": 0.17329768093922046,
+      "max_depth": 4,
+      "reg_lambda": 4.438277669999272
+    },
+    {
+      "number": 11,
+      "value": -6.405384909813023,
+      "learning_rate": 0.021983189396211078,
+      "max_depth": 3,
+      "reg_lambda": 0.7894763840131043
+    },
+    {
+      "number": 12,
+      "value": -6.386113229013349,
+      "learning_rate": 0.02499671695436446,
+      "max_depth": 3,
+      "reg_lambda": 1.6257323031351276
+    },
+    {
+      "number": 13,
+      "value": -6.397756014495649,
+      "learning_rate": 0.028767845259975385,
+      "max_depth": 3,
+      "reg_lambda": 2.0793243749675505
+    },
+    {
+      "number": 14,
+      "value": -6.634786370694347,
+      "learning_rate": 0.06825143888948895,
+      "max_depth": 4,
+      "reg_lambda": 2.0659670480270544
+    }
+  ]
+}

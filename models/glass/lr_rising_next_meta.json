@@ -1,0 +1,11 @@
+{
+  "threshold": 0.6599999999999999,
+  "target": "rising_next",
+  "config": "glass",
+  "far_cap": 0.2,
+  "best_params": {
+    "penalty": "elasticnet",
+    "C": 0.03334792728637585,
+    "l1_ratio": 0.09767211400638387
+  }
+}

@@ -1,0 +1,8 @@
+[
+  "Six-year GLASS history only (2018-2023), limiting depth of longitudinal features.",
+  "GLASS countries reflect a reporting filter (better-reporting countries overrepresented).",
+  "Thresholds for 'high risk' (30%) and 'rising' (>=5 pp, z-test p<0.05) are project-defined, not clinical cure guidelines.",
+  "Measurement definition mismatch: ECDC uses I+R; GLASS uses R as reported \u2014 levels must not be compared directly.",
+  "Small held-out test sets (especially GLASS 2023 single-year slice) increase metric variance; paired country bootstrap CIs are provided.",
+  "Mild temporal overlap between pooled training (GLASS 2019-2021) and held-out ECDC test (2018-2019)."
+]

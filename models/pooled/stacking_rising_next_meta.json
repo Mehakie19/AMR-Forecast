@@ -1,0 +1,7 @@
+{
+  "threshold": 0.22999999999999998,
+  "target": "rising_next",
+  "config": "pooled",
+  "far_cap": 0.2,
+  "best_params": {}
+}

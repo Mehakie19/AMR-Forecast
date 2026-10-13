@@ -1,0 +1,7 @@
+{
+  "threshold": 0.58,
+  "target": "high_risk_next",
+  "config": "glass",
+  "far_cap": 0.2,
+  "best_params": {}
+}

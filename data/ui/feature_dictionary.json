@@ -1,0 +1,184 @@
+[
+  {
+    "name": "lag_1",
+    "group": "temporal",
+    "availability": "derived",
+    "definition": "pct_resistant at t-1 (consecutive year only).",
+    "justification": "Persistence is a strong AMR baseline; last observed resistance anchors forecasts."
+  },
+  {
+    "name": "lag_2",
+    "group": "temporal",
+    "availability": "derived",
+    "definition": "pct_resistant at t-2 when consecutive.",
+    "justification": "Two-year history helps detect acceleration beyond single-year noise."
+  },
+  {
+    "name": "delta_1",
+    "group": "temporal",
+    "availability": "derived",
+    "definition": "lag_1 minus lag_2.",
+    "justification": "Recent momentum complements level for rising-resistance detection."
+  },
+  {
+    "name": "roll_mean_2",
+    "group": "temporal",
+    "availability": "derived",
+    "definition": "Mean of resistance in last two observed years before t.",
+    "justification": "Smooths single-year sampling noise in surveillance counts."
+  },
+  {
+    "name": "roll_std_2",
+    "group": "temporal",
+    "availability": "derived",
+    "definition": "Std dev of last two years before t.",
+    "justification": "Volatile series may need different alert thresholds in review."
+  },
+  {
+    "name": "hist_max",
+    "group": "temporal",
+    "availability": "derived",
+    "definition": "Maximum pct_resistant in years < t.",
+    "justification": "Historical peaks indicate prior selection pressure in the population."
+  },
+  {
+    "name": "hist_min",
+    "group": "temporal",
+    "availability": "derived",
+    "definition": "Minimum pct_resistant in years < t.",
+    "justification": "Floor resistance contextualizes how far a series has already risen."
+  },
+  {
+    "name": "years_observed",
+    "group": "temporal",
+    "availability": "derived",
+    "definition": "Count of years with data strictly before t.",
+    "justification": "Maturity of surveillance series affects forecast reliability."
+  },
+  {
+    "name": "has_lag2",
+    "group": "temporal",
+    "availability": "derived",
+    "definition": "1 if lag_2 is available.",
+    "justification": "Flags when two-year dynamics features are defined."
+  },
+  {
+    "name": "log_tested",
+    "group": "sample quality",
+    "availability": "derived",
+    "definition": "log1p(number_tested at t-1).",
+    "justification": "Larger denominators stabilize proportion estimates in surveillance."
+  },
+  {
+    "name": "ast_coverage",
+    "group": "sample quality",
+    "availability": "direct (GLASS)",
+    "definition": "GLASS AST coverage at t-1 row.",
+    "justification": "Incomplete testing can bias apparent resistance levels."
+  },
+  {
+    "name": "wilson_width",
+    "group": "sample quality",
+    "availability": "derived",
+    "definition": "95% Wilson interval width from t-1 counts.",
+    "justification": "Quantifies uncertainty in the lagged resistance estimate."
+  },
+  {
+    "name": "n_ge_30_prev",
+    "group": "sample quality",
+    "availability": "derived",
+    "definition": "1 if number_tested at t-1 >= 30.",
+    "justification": "WHO-style minimum denominators for reliable proportions."
+  },
+  {
+    "name": "class_mean_other",
+    "group": "cross-resistance",
+    "availability": "derived",
+    "definition": "Mean resistance of other drugs same ATC class at t-1.",
+    "justification": "Class-level co-resistance is common in Gram-negative surveillance."
+  },
+  {
+    "name": "other_mean_all",
+    "group": "cross-resistance",
+    "availability": "derived",
+    "definition": "Mean resistance of all other antibiotics at t-1.",
+    "justification": "Background multidrug resistance signals ecosystem pressure."
+  },
+  {
+    "name": "n_high_other",
+    "group": "cross-resistance",
+    "availability": "derived",
+    "definition": "Count of other antibiotics with resistance >= T at t-1.",
+    "justification": "Counts co-resistant drugs relevant to multidrug phenotypes."
+  },
+  {
+    "name": "mdr_burden",
+    "group": "cross-resistance",
+    "availability": "derived",
+    "definition": "n_high_other divided by number of other antibiotics observed.",
+    "justification": "Normalizes multidrug burden to comparable scale across pathogens."
+  },
+  {
+    "name": "pathogen",
+    "group": "context",
+    "availability": "direct",
+    "definition": "Pathogen name.",
+    "justification": "Species drives intrinsic resistance mechanisms and trends."
+  },
+  {
+    "name": "antibiotic",
+    "group": "context",
+    "availability": "direct",
+    "definition": "Antibiotic name.",
+    "justification": "Drug-specific epidemiology varies by mechanism and usage."
+  },
+  {
+    "name": "antibiotic_class",
+    "group": "context",
+    "availability": "direct",
+    "definition": "ATC level-3 class.",
+    "justification": "Groups agents with related resistance pathways."
+  },
+  {
+    "name": "who_region",
+    "group": "context",
+    "availability": "direct (GLASS)",
+    "definition": "WHO region (GLASS only).",
+    "justification": "Regional policies and circulation patterns differ globally."
+  },
+  {
+    "name": "region_median_prev",
+    "group": "context",
+    "availability": "derived",
+    "definition": "Median resistance for pathogen x antibiotic across countries at t-1 within source.",
+    "justification": "Peer benchmark for whether a country is an outlier."
+  },
+  {
+    "name": "gap_from_region_prev",
+    "group": "context",
+    "availability": "derived",
+    "definition": "lag_1 minus region_median_prev.",
+    "justification": "Relative elevation may persist or mean-revert differently."
+  },
+  {
+    "name": "covid_flag",
+    "group": "flags",
+    "availability": "derived",
+    "definition": "1 if target year is 2020.",
+    "justification": "Pandemic years disrupted sampling and hospital mix."
+  },
+  {
+    "name": "is_glass",
+    "group": "flags",
+    "availability": "derived (pooled)",
+    "definition": "1 if row is GLASS.",
+    "justification": "Lets pooled models respect source-specific measurement."
+  },
+  {
+    "name": "ecdc_definition_ipr",
+    "group": "flags",
+    "availability": "derived (pooled)",
+    "definition": "1 if row is ECDC (I+R definition).",
+    "justification": "Captures systematic definition difference in pooled training."
+  }
+]

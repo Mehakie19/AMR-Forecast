@@ -1,0 +1,10 @@
+{
+  "threshold": 0.6,
+  "target": "high_risk_next",
+  "config": "ecdc",
+  "far_cap": 0.2,
+  "best_params": {
+    "penalty": "l1",
+    "C": 0.003129659226231396
+  }
+}

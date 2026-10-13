@@ -1,0 +1,93 @@
+{
+  "definitions": {
+    "high_risk_next": "1 if next-year resistance >= 30% (project-defined threshold, sensitivity at 20% and 50%).",
+    "rising_next": "1 if next-year resistance rises >= 5 pp AND one-sided 2-proportion z-test p < 0.05 AND sample >= 30 in both years.",
+    "y_reg": "Continuous next-year resistance percentage."
+  },
+  "thresholds": {
+    "high_risk_T": 30,
+    "high_risk_sensitivity": [
+      20,
+      50
+    ],
+    "rise_pp": 5,
+    "min_tested": 30,
+    "alpha": 0.05,
+    "false_alert_rate_cap": 0.2
+  },
+  "splits": {
+    "glass": {
+      "train_years": [
+        2019,
+        2020,
+        2021
+      ],
+      "val_years": [
+        2022
+      ],
+      "test_years": [
+        2023
+      ],
+      "rolling_origin_val_years": [
+        2020,
+        2021
+      ]
+    },
+    "ecdc": {
+      "train_years": [
+        1999,
+        2000,
+        2001,
+        2002,
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015
+      ],
+      "val_years": [
+        2016,
+        2017
+      ],
+      "test_years": [
+        2018,
+        2019
+      ],
+      "rolling_origin_val_years": [
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015
+      ]
+    },
+    "pooled": {
+      "exclude_key_overlap_from_train": true
+    }
+  },
+  "limitations": [
+    "Six-year GLASS history only (2018-2023), limiting depth of longitudinal features.",
+    "GLASS countries reflect a reporting filter (better-reporting countries overrepresented).",
+    "Thresholds for 'high risk' (30%) and 'rising' (>=5 pp, z-test p<0.05) are project-defined, not clinical cure guidelines.",
+    "Measurement definition mismatch: ECDC uses I+R; GLASS uses R as reported \u2014 levels must not be compared directly.",
+    "Small held-out test sets (especially GLASS 2023 single-year slice) increase metric variance; paired country bootstrap CIs are provided.",
+    "Mild temporal overlap between pooled training (GLASS 2019-2021) and held-out ECDC test (2018-2019)."
+  ],
+  "phase2_roadmap": [
+    "SHAP value explanations for feature attribution",
+    "Conformal prediction intervals with formal coverage guarantees",
+    "Spatial clustering and transfer learning experiments",
+    "Isolation Forest multivariate anomaly detection",
+    "CUSUM and change-point surveillance alerts",
+    "Automated feature group ablation studies"
+  ]
+}

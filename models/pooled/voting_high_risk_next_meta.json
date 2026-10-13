@@ -1,0 +1,7 @@
+{
+  "threshold": 0.7,
+  "target": "high_risk_next",
+  "config": "pooled",
+  "far_cap": 0.2,
+  "best_params": {}
+}

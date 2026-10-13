@@ -1,0 +1,134 @@
+[
+  {
+    "feature": "lag_1",
+    "corr_high_risk": 0.8557163365187329,
+    "corr_rising": 0.15683998665821797,
+    "abs_importance": 0.8557163365187329
+  },
+  {
+    "feature": "roll_mean_2",
+    "corr_high_risk": 0.8542587168749355,
+    "corr_rising": 0.1670775258417001,
+    "abs_importance": 0.8542587168749355
+  },
+  {
+    "feature": "hist_max",
+    "corr_high_risk": 0.8504612502456236,
+    "corr_rising": 0.17186322697232645,
+    "abs_importance": 0.8504612502456236
+  },
+  {
+    "feature": "lag_2",
+    "corr_high_risk": 0.8333445522892867,
+    "corr_rising": 0.20847242758050266,
+    "abs_importance": 0.8333445522892867
+  },
+  {
+    "feature": "hist_min",
+    "corr_high_risk": 0.7995339267205951,
+    "corr_rising": 0.17333444989684355,
+    "abs_importance": 0.7995339267205951
+  },
+  {
+    "feature": "n_ge_30_prev",
+    "corr_high_risk": 0.0,
+    "corr_rising": 0.0,
+    "abs_importance": NaN
+  },
+  {
+    "feature": "region_median_prev",
+    "corr_high_risk": 0.6530933740409725,
+    "corr_rising": 0.17382530825999842,
+    "abs_importance": 0.6530933740409725
+  },
+  {
+    "feature": "class_mean_other",
+    "corr_high_risk": 0.647902240938199,
+    "corr_rising": 0.22593152389830018,
+    "abs_importance": 0.647902240938199
+  },
+  {
+    "feature": "mdr_burden",
+    "corr_high_risk": 0.64329376069826,
+    "corr_rising": 0.21365011552301733,
+    "abs_importance": 0.64329376069826
+  },
+  {
+    "feature": "other_mean_all",
+    "corr_high_risk": 0.6418616310951715,
+    "corr_rising": 0.19891463476981544,
+    "abs_importance": 0.6418616310951715
+  },
+  {
+    "feature": "n_high_other",
+    "corr_high_risk": 0.5806573180628912,
+    "corr_rising": 0.20616673923704443,
+    "abs_importance": 0.5806573180628912
+  },
+  {
+    "feature": "wilson_width",
+    "corr_high_risk": 0.5040314865173655,
+    "corr_rising": 0.16330933465716327,
+    "abs_importance": 0.5040314865173655
+  },
+  {
+    "feature": "roll_std_2",
+    "corr_high_risk": 0.4169257399565343,
+    "corr_rising": 0.14476981510169537,
+    "abs_importance": 0.4169257399565343
+  },
+  {
+    "feature": "gap_from_region_prev",
+    "corr_high_risk": 0.4072964287350478,
+    "corr_rising": 0.0011951169578281132,
+    "abs_importance": 0.4072964287350478
+  },
+  {
+    "feature": "ecdc_definition_ipr",
+    "corr_high_risk": -0.37430169142661707,
+    "corr_rising": -0.17043622928855698,
+    "abs_importance": 0.37430169142661707
+  },
+  {
+    "feature": "is_glass",
+    "corr_high_risk": 0.3743016914266169,
+    "corr_rising": 0.17043622928855698,
+    "abs_importance": 0.3743016914266169
+  },
+  {
+    "feature": "years_observed",
+    "corr_high_risk": -0.22958431679868022,
+    "corr_rising": -0.14411436992307977,
+    "abs_importance": 0.22958431679868022
+  },
+  {
+    "feature": "covid_flag",
+    "corr_high_risk": 0.20769132072037214,
+    "corr_rising": 0.1318674208601407,
+    "abs_importance": 0.20769132072037214
+  },
+  {
+    "feature": "log_tested",
+    "corr_high_risk": -0.20506148590320245,
+    "corr_rising": -0.10163775539134107,
+    "abs_importance": 0.20506148590320245
+  },
+  {
+    "feature": "delta_1",
+    "corr_high_risk": 0.15233331287384455,
+    "corr_rising": -0.07768548272611249,
+    "abs_importance": 0.15233331287384455
+  },
+  {
+    "feature": "ast_coverage",
+    "corr_high_risk": -0.13746798317951606,
+    "corr_rising": -0.059643328690498855,
+    "abs_importance": 0.13746798317951606
+  },
+  {
+    "feature": "has_lag2",
+    "corr_high_risk": -0.08817907006584631,
+    "corr_rising": -0.009833626997523284,
+    "abs_importance": 0.08817907006584631
+  }
+]

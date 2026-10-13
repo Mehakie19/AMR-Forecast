@@ -1,0 +1,16 @@
+{
+  "threshold": 0.6,
+  "target": "rising_next",
+  "config": "ecdc",
+  "far_cap": 0.2,
+  "best_params": {
+    "learning_rate": 0.014723153437347074,
+    "max_depth": 2,
+    "reg_lambda": 0.20702618085009897,
+    "reg_alpha": 0.02569876983094186,
+    "gamma": 0.26433655431405134,
+    "min_child_weight": 6,
+    "subsample": 0.9072039006317677,
+    "colsample_bytree": 0.7825272582115786
+  }
+}

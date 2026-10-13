@@ -1,0 +1,16 @@
+{
+  "threshold": 0.4599999999999999,
+  "target": "high_risk_next",
+  "config": "glass",
+  "far_cap": 0.2,
+  "best_params": {
+    "learning_rate": 0.02563536408978925,
+    "max_depth": 5,
+    "reg_lambda": 0.9293849618415544,
+    "reg_alpha": 0.017319650698803958,
+    "gamma": 1.0005773726908258,
+    "min_child_weight": 3,
+    "subsample": 0.8574463498494105,
+    "colsample_bytree": 0.9968383766596345
+  }
+}

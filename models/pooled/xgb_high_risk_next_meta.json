@@ -1,0 +1,16 @@
+{
+  "threshold": 0.7899999999999999,
+  "target": "high_risk_next",
+  "config": "pooled",
+  "far_cap": 0.2,
+  "best_params": {
+    "learning_rate": 0.026038747964143884,
+    "max_depth": 4,
+    "reg_lambda": 1.250826827710642,
+    "reg_alpha": 0.4046300871922783,
+    "gamma": 0.2279640737763981,
+    "min_child_weight": 7,
+    "subsample": 0.7487665468333541,
+    "colsample_bytree": 0.7619649397418609
+  }
+}

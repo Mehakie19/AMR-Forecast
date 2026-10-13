@@ -1,0 +1,12 @@
+{
+  "threshold": 0.49999999999999994,
+  "target": "high_risk_next",
+  "config": "glass",
+  "far_cap": 0.2,
+  "best_params": {
+    "n_estimators": 100,
+    "max_depth": 7,
+    "min_samples_leaf": 10,
+    "max_features": "sqrt"
+  }
+}
