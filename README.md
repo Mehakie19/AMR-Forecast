@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # AMR-Sense (Phase 1)
 
 > ⚠️ **Persistent Disclaimer:** Surveillance and research tool only. Not for treatment decisions. Predicted resistance is not the probability of clinical cure. High-risk and rising resistance thresholds are **project-defined**, not clinical guidelines.
@@ -193,3 +194,6 @@ The Phase 1 architecture leaves clean extension points for subsequent research m
 - **Trajectory Clustering:** Longitudinal time-series clustering (Dynamic Time Warping) to discover shared regional resistance trajectories.
 - **Change-Point Detection:** CUSUM and Isolation Forests for automated laboratory outbreak alarms.
 - **Transfer Learning:** Domain adaptation transferring long-horizon European patterns to emerging surveillance networks.
+=======
+# AMR-Forecast
+>>>>>>> 7f82652efcc2a299b442e0efe78eb1709467a4f5
