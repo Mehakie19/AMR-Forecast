@@ -27,7 +27,7 @@ def test_vite_pages_exist():
         "ModelLab.jsx",
         "ForecastExplorer.jsx",
         "SurveillanceWatchlist.jsx",
-        "MethodsLimitations.jsx",
+        "IntelligenceOverview.jsx",
     ]
     for page in required_pages:
         assert (pages_dir / page).exists(), f"Page {page} missing in frontend/src/pages"
@@ -35,8 +35,13 @@ def test_vite_pages_exist():
 
 def test_vite_disclaimer_present():
     app_jsx = (FRONTEND / "src" / "App.jsx").read_text(encoding="utf-8")
-    assert "Surveillance and research tool" in app_jsx
-    assert "Predicted resistance is not the probability of clinical cure" in app_jsx
+    assert "Research and surveillance only" in app_jsx
+    assert "not for choosing treatment or antibiotic doses" in app_jsx
+
+
+def test_country_map_asset_exists():
+    map_data = FRONTEND / "public" / "data" / "ne_110m_admin_0_countries.geojson"
+    assert map_data.exists(), "Interactive overview requires the local Natural Earth country map"
 
 
 def test_vite_build_artifact_exists():

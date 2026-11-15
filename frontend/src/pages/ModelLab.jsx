@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
-import { Award, TrendingUp, Sliders, CheckCircle2, ChevronRight, BarChart2 } from 'lucide-react';
+import { Award, TrendingUp, Sliders, ChevronRight, BarChart2 } from 'lucide-react';
 
 export default function ModelLab({ scope }) {
   const [config, setConfig] = useState('glass');
@@ -11,11 +11,7 @@ export default function ModelLab({ scope }) {
   const [comparison, setComparison] = useState([]);
   const [curves, setCurves] = useState(null);
   const [selectedModel, setSelectedModel] = useState('xgb');
-  const [regularization, setRegularization] = useState(null);
-  const [tuning, setTuning] = useState(null);
-  const [ensembles, setEnsembles] = useState(null);
   const [segments, setSegments] = useState(null);
-  const [errors, setErrors] = useState(null);
   const [pooledVsSep, setPooledVsSep] = useState('');
   const [regressors, setRegressors] = useState([]);
 
@@ -42,11 +38,7 @@ export default function ModelLab({ scope }) {
   }, [config, target, selectedModel]);
 
   useEffect(() => {
-    api.getResultsRegularization().then((d) => setRegularization(d)).catch(console.error);
-    api.getResultsTuning(config).then((d) => setTuning(d)).catch(console.error);
-    api.getResultsEnsembles(config).then((d) => setEnsembles(d)).catch(console.error);
     api.getResultsSegments(config, target).then((d) => setSegments(d)).catch(console.error);
-    api.getResultsErrors(config).then((d) => setErrors(d)).catch(console.error);
     api.getResultsPooledVsSeparate().then((d) => setPooledVsSep(d?.markdown || '')).catch(console.error);
   }, [config, target]);
 
@@ -54,10 +46,10 @@ export default function ModelLab({ scope }) {
     <div>
       <div style={{ marginBottom: 20 }}>
         <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: 8 }}>
-          Model Lab — Rigorous Benchmarking &amp; Diagnostics
+          How well do the models work?
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Compare baselines, tuned tree ensembles, and time-safe stacking against paired country-cluster bootstrap CIs.
+          Compare model results for different alert categories and data sources. Use the controls to choose what results to view.
         </p>
       </div>
 
@@ -74,7 +66,7 @@ export default function ModelLab({ scope }) {
       >
         <div>
           <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase' }}>
-            Model Configuration
+            Data used to train the model
           </label>
           <select
             className="form-select"
@@ -90,7 +82,7 @@ export default function ModelLab({ scope }) {
 
         <div>
           <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase' }}>
-            Surveillance Target
+            What it predicts
           </label>
           <select
             className="form-select"
@@ -106,7 +98,7 @@ export default function ModelLab({ scope }) {
 
         <div>
           <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase' }}>
-            Evaluation Split
+            Which years are checked
           </label>
           <select
             className="form-select"
@@ -114,8 +106,8 @@ export default function ModelLab({ scope }) {
             onChange={(e) => setSplit(e.target.value)}
             style={{ marginTop: 4 }}
           >
-            <option value="test">Held-Out Test Set (Single-Shot FROZEN)</option>
-            <option value="validation">Validation Split (Forward Rolling OOF)</option>
+            <option value="test">Later test years (final check)</option>
+            <option value="validation">Validation years (model selection)</option>
           </select>
         </div>
       </div>
@@ -123,15 +115,11 @@ export default function ModelLab({ scope }) {
       {/* Tabs */}
       <div className="tabs-header">
         {[
-          { id: 'comparison', label: '1. Model Comparison' },
-          { id: 'curves', label: '2. PR / ROC Curves' },
-          { id: 'regularization', label: '3. Regularization Evidence' },
-          { id: 'tuning', label: '4. Hyperparameter Tuning' },
-          { id: 'ensembles', label: '5. Ensembles & Diversity' },
-          { id: 'segments', label: '6. Segments' },
-          { id: 'errors', label: '7. Error Analysis' },
-          { id: 'pooling', label: '8. Thresholds & Pooling' },
-          { id: 'regressors', label: '9. Companion Regressors' },
+          { id: 'comparison', label: '1. Compare models' },
+          { id: 'curves', label: '2. Curves and score quality' },
+          { id: 'segments', label: '3. Results by group' },
+          { id: 'pooling', label: '4. Sources and thresholds' },
+          { id: 'regressors', label: '5. Percentage estimates' },
         ].map((t) => (
           <button
             key={t.id}
@@ -149,7 +137,7 @@ export default function ModelLab({ scope }) {
           <div className="card" style={{ marginBottom: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h3 style={{ fontSize: '1.15rem' }}>
-                Benchmark Performance Table ({config.toUpperCase()} • {target} • {split.toUpperCase()})
+                Model results ({config.toUpperCase()} • {target} • {split.toUpperCase()})
               </h3>
               <span className="badge" style={{ background: 'rgba(6, 182, 212, 0.15)', color: 'var(--accent-cyan)' }}>
                 Evaluation metrics
@@ -161,13 +149,13 @@ export default function ModelLab({ scope }) {
                 <thead>
                   <tr>
                     <th>Model Family</th>
-                    <th>PR-AUC (95% CI)</th>
-                    <th>ROC-AUC</th>
-                    <th>F1 Score</th>
-                    <th>Sensitivity (Recall)</th>
-                    <th>False-Alert Rate</th>
-                    <th>Brier Score</th>
-                    <th>Diff vs Baseline (95% CI)</th>
+                    <th title="How well the model finds positive cases while avoiding false alerts; useful when alerts are uncommon">PR-AUC (95% range)</th>
+                    <th title="How well the model ranks positive cases above negative cases">ROC-AUC</th>
+                    <th title="A combined measure of precision and recall">F1</th>
+                    <th title="Share of positive cases correctly flagged">Recall</th>
+                    <th title="Share of negative cases incorrectly flagged">False-alert rate</th>
+                    <th title="How close predicted probabilities are to observed outcomes; lower is better">Brier score</th>
+                    <th title="Model score minus baseline score; a range crossing zero does not show a clear difference">Difference from baseline (95% range)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -215,9 +203,6 @@ export default function ModelLab({ scope }) {
               </table>
             </div>
 
-            <div className="explainer" style={{ marginTop: 16 }}>
-              <strong>Glossary:</strong> PR-AUC = Area under Precision-Recall curve (primary for imbalanced surveillance alerts). False-Alert Rate = FP / (FP + TN). Bootstrap CIs resample countries with replacement to account for cross-sectional clustering.
-            </div>
           </div>
         </div>
       )}
@@ -266,6 +251,7 @@ export default function ModelLab({ scope }) {
                   )}
                   <text x="30" y="175" fill="var(--text-dim)" fontSize="10">0.0</text>
                   <text x="155" y="175" fill="var(--text-dim)" fontSize="10">Recall</text>
+                  <text x="11" y="93" fill="var(--text-dim)" fontSize="10" transform="rotate(-90 11 93)">Precision</text>
                   <text x="270" y="175" fill="var(--text-dim)" fontSize="10">1.0</text>
                   <text x="8" y="25" fill="var(--text-dim)" fontSize="10">1.0</text>
                   <text x="8" y="160" fill="var(--text-dim)" fontSize="10">0.0</text>
@@ -297,7 +283,8 @@ export default function ModelLab({ scope }) {
                     />
                   )}
                   <text x="30" y="175" fill="var(--text-dim)" fontSize="10">0.0</text>
-                  <text x="155" y="175" fill="var(--text-dim)" fontSize="10">FPR</text>
+                  <text x="155" y="175" fill="var(--text-dim)" fontSize="10">False-positive rate</text>
+                  <text x="11" y="93" fill="var(--text-dim)" fontSize="10" transform="rotate(-90 11 93)">True-positive rate</text>
                   <text x="270" y="175" fill="var(--text-dim)" fontSize="10">1.0</text>
                 </svg>
               </div>
@@ -305,58 +292,33 @@ export default function ModelLab({ scope }) {
           </div>
           <div className="result-grid" style={{ marginTop: 20 }}>
             <section className="result-panel">
-              <h4>Calibration</h4>
+              <h4>Do scores match observed results? (calibration)</h4>
               {curves?.calibration?.length ? <svg viewBox="0 0 300 230" role="img" aria-label="Calibration plot" style={{ width: '100%', height: 230 }}>
                 <line x1="35" y1="190" x2="270" y2="190" stroke="rgba(255,255,255,.2)" />
                 <line x1="35" y1="20" x2="35" y2="190" stroke="rgba(255,255,255,.2)" />
                 <line x1="35" y1="190" x2="270" y2="20" stroke="rgba(255,255,255,.25)" strokeDasharray="5 4" />
                 <path d={curves.calibration.map((point, index) => `${index ? 'L' : 'M'} ${35 + point.mean_pred * 235} ${190 - point.frac_pos * 170}`).join(' ')} fill="none" stroke="var(--accent-cyan)" strokeWidth="2.5" />
                 {curves.calibration.map((point, index) => <circle key={index} cx={35 + point.mean_pred * 235} cy={190 - point.frac_pos * 170} r="4" fill="var(--accent-cyan)"><title>{`Predicted ${point.mean_pred.toFixed(2)}, observed ${point.frac_pos.toFixed(2)} (n=${point.count})`}</title></circle>)}
-                <text x="125" y="218" fill="var(--text-muted)" fontSize="11">Mean predicted risk</text>
+                <text x="125" y="218" fill="var(--text-muted)" fontSize="11">Average predicted score</text>
+                <text x="10" y="105" fill="var(--text-muted)" fontSize="10" transform="rotate(-90 10 105)">Share of events observed</text>
               </svg> : <p className="explainer">Calibration data is unavailable for this curve.</p>}
             </section>
             <section className="result-panel">
-              <h4>Confusion matrix at selected threshold</h4>
+              <h4>Results at the chosen score cutoff</h4>
               {curves?.confusion_matrix ? <div className="confusion-grid">
-                <div><small>True negative</small><strong>{curves.confusion_matrix.tn}</strong></div>
-                <div><small>False positive</small><strong>{curves.confusion_matrix.fp}</strong></div>
-                <div><small>False negative</small><strong>{curves.confusion_matrix.fn}</strong></div>
-                <div><small>True positive</small><strong>{curves.confusion_matrix.tp}</strong></div>
-                <p>Threshold: {Number(curves.confusion_matrix.threshold).toFixed(2)}</p>
+                <div title="Correctly not flagged"><small>Correctly not flagged</small><strong>{curves.confusion_matrix.tn}</strong></div>
+                <div title="Flagged, but the event did not occur"><small>False alert</small><strong>{curves.confusion_matrix.fp}</strong></div>
+                <div title="Event occurred, but was not flagged"><small>Missed event</small><strong>{curves.confusion_matrix.fn}</strong></div>
+                <div title="Correctly flagged"><small>Correctly flagged</small><strong>{curves.confusion_matrix.tp}</strong></div>
+                <p>Score cutoff: {Number(curves.confusion_matrix.threshold).toFixed(2)}</p>
               </div> : <p className="explainer">Confusion matrix is unavailable for this curve.</p>}
             </section>
           </div>
         </div>
       )}
 
-      {/* TAB 3: Regularization */}
-      {activeTab === 'regularization' && (
-        <div className="card">
-          <h3 style={{ fontSize: '1.15rem', marginBottom: 12 }}>Regularization Evidence &amp; Overfitting Controls</h3>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 20 }}>
-            Evaluation of train vs. validation generalization gap across penalties (None, L1, L2, Elastic Net) and tree regularizers.
-          </p>
-
-          {regularization?.markdown ? <pre className="result-json">{regularization.markdown}</pre> : <p className="explainer">No regularization report is available in reports/results/regularization.md.</p>}
-        </div>
-      )}
-
-      {activeTab === 'tuning' && <div className="card">
-        <h3>Hyperparameter tuning</h3>
-        <p className="explainer">Optuna artifacts are returned by the API when present. No study artifact is available for this configuration yet.</p>
-        <pre className="result-json">{JSON.stringify(tuning?.study || {}, null, 2)}</pre>
-      </div>}
-
-      {activeTab === 'ensembles' && <div className="card">
-        <h3>Ensemble methods</h3>
-        <div className="result-grid">
-          <section><h4>Soft voting</h4><p>{ensembles?.voting_description || 'Description unavailable.'}</p></section>
-          <section><h4>Time safe stacking</h4><p>{ensembles?.stacking_description || 'Description unavailable.'}</p></section>
-        </div>
-      </div>}
-
       {activeTab === 'segments' && <div className="card">
-        <h3>Performance by surveillance segment</h3>
+        <h3>Does performance vary across groups?</h3>
         {segments?.segments && Object.entries(segments.segments).map(([group, rows]) => <section className="result-section" key={group}>
           <h4>{group}</h4><div className="data-table-container"><table className="data-table"><thead><tr><th>Segment</th><th>Rows</th><th>PR AUC</th><th>ROC AUC</th><th>Recall</th><th>False alert rate</th></tr></thead>
             <tbody>{rows.map((row) => <tr key={row.segment}><td>{row.segment}</td><td>{row.n_rows}</td><td>{row.pr_auc?.toFixed(3) ?? '—'}</td><td>{row.roc_auc?.toFixed(3) ?? '—'}</td><td>{row.recall?.toFixed(3) ?? '—'}</td><td>{row.false_alert_rate?.toFixed(3) ?? '—'}</td></tr>)}</tbody>
@@ -365,27 +327,14 @@ export default function ModelLab({ scope }) {
         {!segments?.segments && <p className="explainer">No segment results available for this selection.</p>}
       </div>}
 
-      {activeTab === 'errors' && <div className="card">
-        <h3>Forecast error review</h3>
-        {errors?.errors?.largest_forecast_errors?.length ? <div className="data-table-container"><table className="data-table"><thead><tr><th>Source</th><th>Country</th><th>Year</th><th>Pathogen</th><th>Antibiotic</th><th>Observed</th><th>Forecast</th><th>Absolute error</th></tr></thead><tbody>
-          {errors.errors.largest_forecast_errors.map((row, i) => <tr key={`${row.iso3}-${row.year}-${i}`}><td>{row.source}</td><td>{row.iso3}</td><td>{row.year}</td><td>{row.pathogen}</td><td>{row.antibiotic}</td><td>{row.y_reg?.toFixed(1)}%</td><td>{row.pred_reg?.toFixed(1)}%</td><td>{row.abs_error?.toFixed(1)} pp</td></tr>)}
-        </tbody></table></div> : <p className="explainer">No error analysis is available for this configuration.</p>}
-        {errors?.errors?.highest_confidence_false_alerts?.length > 0 && <section className="result-section">
-          <h4>Highest confidence false alerts</h4>
-          <div className="data-table-container"><table className="data-table"><thead><tr><th>Source</th><th>Country</th><th>Year</th><th>Pathogen</th><th>Antibiotic</th><th>Latest resistance</th><th>Next-year risk score</th></tr></thead><tbody>
-            {errors.errors.highest_confidence_false_alerts.map((row, i) => <tr key={`${row.iso3}-${row.year}-${i}`}><td>{row.source}</td><td>{row.iso3}</td><td>{row.year}</td><td>{row.pathogen}</td><td>{row.antibiotic}</td><td>{row.lag_1?.toFixed(1)}%</td><td>{row.prob_high_risk_next != null ? `${(row.prob_high_risk_next * 100).toFixed(1)}%` : '—'}</td></tr>)}
-          </tbody></table></div>
-        </section>}
-      </div>}
-
-      {/* TAB 8: Thresholds & Pooling */}
+      {/* TAB 4: Sources and Thresholds */}
       {activeTab === 'pooling' && (
         <div className="card">
-          <h3 style={{ fontSize: '1.15rem', marginBottom: 16 }}>Pooled vs. Dedicated Single-Source Evaluation</h3>
+          <h3 style={{ fontSize: '1.15rem', marginBottom: 16 }}>Does combining the two sources help?</h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 16 }}>
-            Comparison on exact identical held-out test rows to answer: <em>Did combining GLASS and ECDC surveillance data help or hurt?</em>
+            The tables below are fixed benchmark results from the project evaluation. They do not change with the source, target, or year selectors above.
           </p>
-          <details className="explainer"><summary>Open current source-specific evaluation report</summary>
+          <details className="explainer"><summary>Open technical benchmark report</summary>
             <pre className="result-json">{pooledVsSep || 'No pooled comparison report is available.'}</pre>
           </details>
 
@@ -439,7 +388,7 @@ export default function ModelLab({ scope }) {
           </div>
 
           <h4 style={{ fontSize: '0.95rem', marginBottom: 10, color: 'var(--accent-cyan)' }}>
-            Threshold Sensitivity Analysis (T = 20%, 30%, 50%)
+            How changing the high-resistance cutoff changes the results
           </h4>
           <div className="data-table-container">
             <table className="data-table">
@@ -466,18 +415,18 @@ export default function ModelLab({ scope }) {
         </div>
       )}
 
-      {/* TAB 9: Companion Regressors */}
+      {/* TAB 5: Percentage Estimates */}
       {activeTab === 'regressors' && (
         <div className="card">
-          <h3 style={{ fontSize: '1.15rem', marginBottom: 12 }}>Companion Continuous Percentage Regressors</h3>
+          <h3 style={{ fontSize: '1.15rem', marginBottom: 12 }}>Estimating the resistance percentage</h3>
           <div className="data-table-container">
             <table className="data-table">
               <thead>
                 <tr>
                   <th>Model</th>
-                  <th>MAE (pp)</th>
-                  <th>RMSE (pp)</th>
-                  <th>Beat Persistence Share</th>
+                  <th title="Average absolute error, measured in percentage points">Average miss (points)</th>
+                  <th title="Error measure that gives larger misses more weight">Larger-error-weighted miss</th>
+                  <th title="Share of series where this model was closer than carrying forward the previous year's percentage">Beat previous-year estimate</th>
                 </tr>
               </thead>
               <tbody>
@@ -492,22 +441,8 @@ export default function ModelLab({ scope }) {
               </tbody>
             </table>
           </div>
-          <div className="explainer" style={{ marginTop: 14 }}>
-            Persistence is an exceptionally tough regression baseline (MAE 3.06 pp in ECDC, 4.71 pp in GLASS). ML regressors outperform persistence on ~42–46% of volatile series.
-          </div>
         </div>
       )}
-
-      {/* Key Takeaway */}
-      <div className="takeaway-box">
-        <CheckCircle2 size={24} color="#34d399" style={{ flexShrink: 0, marginTop: 2 }} />
-        <div>
-          <h4>Key Takeaway: ML Beats Baselines with Statistically Positive CIs</h4>
-          <p>
-            On held-out test data, tuned ML classifiers beat persistence baseline on PR-AUC with 95% confidence (GLASS High-Risk diff: +0.0381 [+0.0163, +0.0646]; GLASS Rising diff: +0.1486 [+0.0620, +0.2969]). On ECDC rising acceleration, pooling with source flags significantly improved detection precision (+0.0522 [+0.0160, +0.0869]).
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

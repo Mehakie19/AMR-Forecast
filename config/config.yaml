@@ -15,6 +15,7 @@ sources:
 
 thresholds:
   high_risk_T: 30
+  forecast_high_resistance_T: 40
   high_risk_sensitivity: [20, 50]
   rise_pp: 5
   min_tested: 30

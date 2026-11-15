@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
-import { BarChart3, TrendingUp, Filter, AlertCircle, Sparkles, CheckCircle2 } from 'lucide-react';
+import { BarChart3, TrendingUp, Filter, AlertCircle, Sparkles } from 'lucide-react';
+
+function quantile(sortedValues, probability) {
+  if (!sortedValues.length) return 0;
+  const position = (sortedValues.length - 1) * probability;
+  const lower = Math.floor(position);
+  const fraction = position - lower;
+  return sortedValues[lower] + (sortedValues[Math.min(lower + 1, sortedValues.length - 1)] - sortedValues[lower]) * fraction;
+}
 
 export default function EdaExplorer({ scope, source }) {
   const [activeTab, setActiveTab] = useState('distributions');
   const [distData, setDistData] = useState([]);
   const [trendData, setTrendData] = useState([]);
-  const [sampleData, setSampleData] = useState([]);
-  const [balanceData, setBalanceData] = useState(null);
   const [corrData, setCorrData] = useState(null);
   const [yoyData, setYoyData] = useState(null);
   const [selectedPathogen, setSelectedPathogen] = useState('Klebsiella pneumoniae');
@@ -19,18 +25,18 @@ export default function EdaExplorer({ scope, source }) {
     Promise.all([
       api.getEdaDistribution(source),
       api.getEdaTrend(source),
-      api.getEdaSampleSize(source),
-      api.getEdaClassBalance(source),
       api.getEdaCorrelation(source, selectedPathogen),
-      api.getEdaYearChange(source),
+      api.getEdaYearChange('glass'),
+      api.getEdaYearChange('ecdc'),
     ])
-      .then(([dist, tr, samp, bal, corr, yoy]) => {
+      .then(([dist, tr, corr, glassYoy, ecdcYoy]) => {
         setDistData(dist?.records || dist?.rows || []);
-        setTrendData(tr?.trends || tr?.series || []);
-        setSampleData(samp?.points || samp?.rows || []);
-        setBalanceData(bal || {});
+        setTrendData(tr?.trends || tr?.series || tr?.rows || []);
         setCorrData(corr?.correlations || corr || null);
-        setYoyData(yoy?.yoy || yoy || null);
+        setYoyData({
+          glass: glassYoy?.data?.glass || glassYoy?.data,
+          ecdc: ecdcYoy?.data?.ecdc || ecdcYoy?.data,
+        });
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
@@ -47,9 +53,9 @@ export default function EdaExplorer({ scope, source }) {
     return Object.entries(map).map(([key, vals]) => {
       const [sourceName, abx] = key.split('::');
       const sorted = [...vals].sort((a, b) => a - b);
-      const median = sorted[Math.floor(sorted.length * 0.5)] || 0;
-      const q25 = sorted[Math.floor(sorted.length * 0.25)] || 0;
-      const q75 = sorted[Math.floor(sorted.length * 0.75)] || 0;
+      const median = quantile(sorted, 0.5);
+      const q25 = quantile(sorted, 0.25);
+      const q75 = quantile(sorted, 0.75);
       const min = sorted[0] || 0;
       const max = sorted[sorted.length - 1] || 0;
       return { abx, source: sourceName, count: vals.length, median, q25, q75, min, max };
@@ -59,22 +65,37 @@ export default function EdaExplorer({ scope, source }) {
   // Longitudinal trend aggregates
   const annualTrends = React.useMemo(() => {
     const filtered = trendData.filter((d) => !selectedPathogen || d.pathogen === selectedPathogen);
-    return filtered.map((d) => ({
-      year: Number(d.year), median: Number(d.median), mean: Number(d.mean),
-      source: d.source, count: Number(d.count),
-    })).filter((d) => Number.isFinite(d.median)).sort((a, b) => a.year - b.year);
+    const groups = new Map();
+    filtered.forEach((row) => {
+      const year = Number(row.year);
+      const median = Number(row.median);
+      if (!Number.isFinite(year) || !Number.isFinite(median)) return;
+      const key = `${row.source}::${year}`;
+      const group = groups.get(key) || { year, source: row.source, medians: [], count: 0 };
+      group.medians.push(median);
+      group.count += Number(row.count) || 0;
+      groups.set(key, group);
+    });
+    return [...groups.values()].map(({ medians, ...group }) => {
+      const sorted = medians.sort((a, b) => a - b);
+      return { ...group, median: quantile(sorted, 0.5) };
+    }).sort((a, b) => a.year - b.year);
   }, [trendData, selectedPathogen]);
-  const lowSampleCount = sampleData.filter((row) => Number(row.number_tested) < 30).length;
-  const adequateSampleCount = sampleData.filter((row) => Number(row.number_tested) >= 30).length;
+  const trendYears = [...new Set(annualTrends.map((point) => point.year))].sort((a, b) => a - b);
+  const trendMinYear = trendYears[0] ?? 0;
+  const trendMaxYear = trendYears[trendYears.length - 1] ?? trendMinYear;
+  const trendTickYears = trendYears.length > 5
+    ? [...new Set([0, 0.25, 0.5, 0.75, 1].map((fraction) => trendYears[Math.round((trendYears.length - 1) * fraction)]))]
+    : trendYears;
 
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
         <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: 8 }}>
-          Exploratory Data Analysis Explorer
+          Explore the surveillance data
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Empirical resistance distributions, longitudinal trends, sampling noise, and cross-resistance co-occurrence.
+          Compare resistance distributions and trends, review year-to-year changes, and see which antibiotic rates move together.
         </p>
       </div>
 
@@ -83,11 +104,8 @@ export default function EdaExplorer({ scope, source }) {
         {[
           { id: 'distributions', label: '1. Distributions' },
           { id: 'trends', label: '2. Longitudinal Trends' },
-          { id: 'samples', label: '3. Sample Size Funnel' },
-          { id: 'yoy', label: '4. Year-on-Year Dynamics' },
-          { id: 'balance', label: '5. Target Class Balance' },
-          { id: 'correlation', label: '6. Cross-Resistance Heatmap' },
-          { id: 'issues', label: '7. Data Issues & Decisions' },
+          { id: 'yoy', label: '3. Changes over time' },
+          { id: 'correlation', label: '4. Antibiotic patterns' },
         ].map((t) => (
           <button
             key={t.id}
@@ -104,14 +122,14 @@ export default function EdaExplorer({ scope, source }) {
         <div>
           <div className="card" style={{ marginBottom: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: '1.15rem' }}>Resistance Rate Distribution by Antibiotic Target</h3>
+              <h3 style={{ fontSize: '1.15rem' }}>Resistance levels by antibiotic</h3>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   className={`btn ${chartType === 'box' ? 'btn-primary' : 'btn-secondary'}`}
                   onClick={() => setChartType('box')}
                   style={{ padding: '4px 12px', fontSize: '0.8rem' }}
                 >
-                  Quantiles View
+                  Box view
                 </button>
                 <button
                   className={`btn ${chartType === 'table' ? 'btn-primary' : 'btn-secondary'}`}
@@ -213,10 +231,6 @@ export default function EdaExplorer({ scope, source }) {
                 </table>
               </div>
             )}
-            <div className="explainer">
-              Each source is summarized separately because GLASS reports resistant isolates and ECDC reports intermediate plus resistant isolates. These distributions should not be read as direct comparisons.
-            </div>
-
             <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginTop: 12, fontSize: '.8rem', color: 'var(--text-muted)' }}>
               <span><b style={{ color: 'var(--source-glass)' }}>●</b> GLASS-AMR · R reported</span>
               <span><b style={{ color: 'var(--source-ecdc)' }}>●</b> ECDC · I+R</span>
@@ -230,9 +244,9 @@ export default function EdaExplorer({ scope, source }) {
         <div>
           <div className="card" style={{ marginBottom: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ fontSize: '1.15rem' }}>Longitudinal Trajectories by Pathogen</h3>
+              <h3 style={{ fontSize: '1.15rem' }}>Yearly resistance patterns for a pathogen</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Pathogen:</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }} title="A bacterium being monitored">Pathogen:</span>
                 <select
                   className="form-select"
                   style={{ width: 220 }}
@@ -251,163 +265,161 @@ export default function EdaExplorer({ scope, source }) {
               <svg width="100%" height="100%" viewBox="0 0 800 200" preserveAspectRatio="none">
                 {/* Horizontal gridlines */}
                 {[0, 25, 50, 75, 100].map((v) => (
-                  <line
-                    key={v}
-                    x1="40"
-                    y1={180 - v * 1.6}
-                    x2="780"
-                    y2={180 - v * 1.6}
-                    stroke="rgba(255,255,255,0.06)"
-                    strokeDasharray="4 4"
-                  />
+                  <g key={v}>
+                    <line
+                      x1="40"
+                      y1={180 - v * 1.6}
+                      x2="780"
+                      y2={180 - v * 1.6}
+                      stroke="rgba(255,255,255,0.06)"
+                      strokeDasharray="4 4"
+                    />
+                    <text x="35" y={180 - v * 1.6 + 3} fill="var(--text-dim)" fontSize="10" textAnchor="end">{v}%</text>
+                  </g>
                 ))}
 
                 {/* Trajectory path */}
-                {[...new Set(annualTrends.map((pt) => pt.source))].map((series, seriesIndex) => {
+                {trendTickYears.map((year) => {
+                  const x = 50 + ((year - trendMinYear) / Math.max(1, trendMaxYear - trendMinYear)) * 710;
+                  return <g key={`tick-${year}`}>
+                    <line x1={x} y1="20" x2={x} y2="180" stroke="rgba(255,255,255,0.03)" />
+                    <text x={x} y="196" fill="var(--text-dim)" fontSize="10" textAnchor="middle">{year}</text>
+                  </g>;
+                })}
+                {[...new Set(annualTrends.map((pt) => pt.source))].map((series) => {
                   const points = annualTrends.filter((pt) => pt.source === series);
-                  const allYears = annualTrends.map((pt) => pt.year);
-                  const minYear = Math.min(...allYears);
-                  const maxYear = Math.max(...allYears);
-                  const xFor = (year) => 50 + ((year - minYear) / Math.max(1, maxYear - minYear)) * 710;
+                  const xFor = (year) => 50 + ((year - trendMinYear) / Math.max(1, trendMaxYear - trendMinYear)) * 710;
                   const color = series?.toLowerCase().includes('glass') ? 'var(--source-glass)' : 'var(--source-ecdc)';
                   return <g key={series}>
                     {points.length > 1 && <path d={points.map((pt, idx) => `${idx ? 'L' : 'M'} ${xFor(pt.year)} ${180 - Math.min(100, pt.median) * 1.6}`).join(' ')} fill="none" stroke={color} strokeWidth="3" />}
                     {points.map((pt) => <g key={`${series}-${pt.year}`}>
                       <circle cx={xFor(pt.year)} cy={180 - Math.min(100, pt.median) * 1.6} r="4" fill={color} stroke="#fff" strokeWidth="1.5" />
-                      {seriesIndex === 0 && <text x={xFor(pt.year)} y="196" fill="var(--text-dim)" fontSize="10" textAnchor="middle">{pt.year}</text>}
                     </g>)}
                   </g>;
                 })}
               </svg>
             </div>
-
-            <div className="explainer">
-              Trajectories show annual median resistance across surveillance sites. Notice upward drift in 3rd-generation cephalosporins and carbapenem resistance in <em>Acinetobacter</em> spp.
+            <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginTop: 10, fontSize: '.8rem', color: 'var(--text-muted)' }}>
+              {annualTrends.some((point) => point.source?.toLowerCase().includes('glass')) && <span><b style={{ color: 'var(--source-glass)' }}>●</b> GLASS-AMR (R)</span>}
+              {annualTrends.some((point) => !point.source?.toLowerCase().includes('glass')) && <span><b style={{ color: 'var(--source-ecdc)' }}>●</b> ECDC (I+R)</span>}
             </div>
+
           </div>
         </div>
       )}
 
-      {/* TAB 3: Sample Size Funnel */}
-      {activeTab === 'samples' && (
-        <div>
-          <div className="card" style={{ marginBottom: 24 }}>
-            <h3 style={{ fontSize: '1.15rem', marginBottom: 12 }}>Sample Size Funnel & Low-Sample Binomial Variance</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 16 }}>
-              Visualizes resistance rates against sample size tested (log-scaled). Observations with small N (&lt; 30) exhibit extreme binary swings (0% or 100%), creating artificial volatility.
-            </p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginBottom: 20 }}>
-              <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: 16, borderRadius: 8 }}>
-                <div style={{ color: '#f87171', fontWeight: 600, fontSize: '0.9rem' }}>Low Sample Observations (N &lt; 30)</div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#fff', margin: '4px 0' }}>{lowSampleCount.toLocaleString()} rows</div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Excluded from classification targets to prevent noise</div>
-              </div>
-              <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: 16, borderRadius: 8 }}>
-                <div style={{ color: '#34d399', fontWeight: 600, fontSize: '0.9rem' }}>Robust Sample Observations (N ≥ 30)</div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#fff', margin: '4px 0' }}>{adequateSampleCount.toLocaleString()} rows</div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Eligible consecutive panel training rows</div>
-              </div>
-            </div>
-
-            <div className="explainer">
-              Binomial standard error scales as $\sqrt{p(1-p)/N}$. Under small N, random sample variance masquerades as alarming year-on-year increases. Our model explicitly incorporates <code>wilson_width</code> and <code>log_tested</code>.
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: Year-on-Year Dynamics */}
+      {/* TAB 3: Year-on-Year Changes */}
       {activeTab === 'yoy' && (
         <div>
           <div className="card" style={{ marginBottom: 24 }}>
-            <h3 style={{ fontSize: '1.15rem', marginBottom: 12 }}>Year-on-Year Volatility & COVID-19 Impact</h3>
+            <h3 style={{ fontSize: '1.15rem', marginBottom: 8 }}>Year-to-year changes in reported resistance</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 16 }}>
+              For each country–pathogen–antibiotic series, the reported percentage in one year is compared with the previous year. The chart shows the average of those changes for each year, in percentage points.
+            </p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 20 }}>
               <div className="kpi-card">
-                <div className="kpi-label">GLASS Annual Delta SD</div>
-                <div className="kpi-value">{(yoyData?.glass?.std ?? yoyData?.std) != null ? `${(yoyData.glass?.std ?? yoyData.std).toFixed(1)} pp` : '—'}</div>
-                <div className="kpi-sub">Higher variance across global sites</div>
+                <div className="kpi-label">GLASS average change</div>
+                <div className="kpi-value">{yoyData?.glass?.mean != null ? `${yoyData.glass.mean.toFixed(2)} pp` : '—'}</div>
+                <div className="kpi-sub">Average year-to-year change across series</div>
               </div>
               <div className="kpi-card">
-                <div className="kpi-label">ECDC Annual Delta SD</div>
-                <div className="kpi-value">{yoyData?.ecdc?.std != null ? `${yoyData.ecdc.std.toFixed(1)} pp` : '—'}</div>
-                <div className="kpi-sub">More stable European surveillance</div>
+                <div className="kpi-label">GLASS change variation</div>
+                <div className="kpi-value">{yoyData?.glass?.std != null ? `${yoyData.glass.std.toFixed(2)} pp` : '—'}</div>
+                <div className="kpi-sub">How much individual series changes vary</div>
               </div>
               <div className="kpi-card">
-                <div className="kpi-label">Rises ≥ +5 pp Share</div>
-                <div className="kpi-value">{(yoyData?.glass?.share_ge_5 ?? yoyData?.share_ge_5) != null ? `${((yoyData.glass?.share_ge_5 ?? yoyData.share_ge_5) * 100).toFixed(1)}%` : '—'}</div>
-                <div className="kpi-sub">Target candidate proportion</div>
+                <div className="kpi-label">GLASS changes rising 5+ points</div>
+                <div className="kpi-value">{yoyData?.glass?.share_ge_5 != null ? `${(yoyData.glass.share_ge_5 * 100).toFixed(1)}%` : '—'}</div>
+                <div className="kpi-sub">Share of year-to-year changes meeting this size</div>
               </div>
               <div className="kpi-card">
-                <div className="kpi-label">2020 COVID Flag</div>
-                <div className="kpi-value">Active</div>
-                <div className="kpi-sub">Flagged without dropping observations</div>
+                <div className="kpi-label">ECDC average change</div>
+                <div className="kpi-value">{yoyData?.ecdc?.mean != null ? `${yoyData.ecdc.mean.toFixed(2)} pp` : '—'}</div>
+                <div className="kpi-sub">Average year-to-year change across series</div>
+              </div>
+              <div className="kpi-card">
+                <div className="kpi-label">ECDC change variation</div>
+                <div className="kpi-value">{yoyData?.ecdc?.std != null ? `${yoyData.ecdc.std.toFixed(2)} pp` : '—'}</div>
+                <div className="kpi-sub">How much individual series changes vary</div>
+              </div>
+              <div className="kpi-card">
+                <div className="kpi-label">ECDC changes rising 5+ points</div>
+                <div className="kpi-value">{yoyData?.ecdc?.share_ge_5 != null ? `${(yoyData.ecdc.share_ge_5 * 100).toFixed(1)}%` : '—'}</div>
+                <div className="kpi-sub">Share of year-to-year changes meeting this size</div>
               </div>
             </div>
 
-            <div className="explainer">
-              Source-specific year-on-year changes are kept separate because the resistance definitions differ. The 2020 observations remain in the time series.
-            </div>
+            {(() => {
+              const rows = ['glass', 'ecdc'].flatMap((key) => Object.entries(yoyData?.[key]?.by_year || {}).map(([year, change]) => ({
+                source: key,
+                year: Number(year),
+                change: Number(change),
+              })));
+              const years = [...new Set(rows.map((row) => row.year))].sort((a, b) => a - b);
+              const maxAbs = Math.max(1, ...rows.map((row) => Math.abs(row.change)));
+              const limit = Math.ceil(maxAbs / 2) * 2;
+              const yFor = (value) => 120 - ((value / limit) * 90);
+              const xFor = (year) => 45 + ((year - (years[0] ?? 0)) / Math.max(1, (years[years.length - 1] ?? 0) - (years[0] ?? 0))) * 710;
+              return (
+                <>
+                  <div style={{ overflowX: 'auto', marginBottom: 16 }}>
+                    <svg viewBox="0 0 780 250" role="img" aria-label="Average year-to-year resistance change by reporting year" style={{ width: '100%', minWidth: 580, height: 250 }}>
+                      {[-limit, 0, limit].map((value) => (
+                        <g key={value}>
+                          <line x1="45" x2="755" y1={yFor(value)} y2={yFor(value)} stroke="rgba(255,255,255,.12)" strokeDasharray={value === 0 ? undefined : '4 4'} />
+                          <text x="40" y={yFor(value) - 5} fill="var(--text-dim)" fontSize="10" textAnchor="end">{value} pp</text>
+                        </g>
+                      ))}
+                      {years.map((year, index) => (index === 0 || index === years.length - 1 || index % Math.ceil(years.length / 6) === 0) && (
+                        <text key={year} x={xFor(year)} y="235" fill="var(--text-dim)" fontSize="10" textAnchor="middle">{year}</text>
+                      ))}
+                      {['glass', 'ecdc'].map((key) => {
+                        const points = rows.filter((row) => row.source === key).sort((a, b) => a.year - b.year);
+                        const color = key === 'glass' ? 'var(--source-glass)' : 'var(--source-ecdc)';
+                        return (
+                          <g key={key}>
+                            {points.length > 1 && <path d={points.map((point, index) => `${index ? 'L' : 'M'} ${xFor(point.year)} ${yFor(point.change)}`).join(' ')} fill="none" stroke={color} strokeWidth="2" />}
+                            {points.map((point) => (
+                              <circle key={`${key}-${point.year}`} cx={xFor(point.year)} cy={yFor(point.change)} r="3.5" fill={color}>
+                                <title>{`${key.toUpperCase()} ${point.year}: ${point.change.toFixed(2)} percentage points average change`}</title>
+                              </circle>
+                            ))}
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  </div>
+                  <div style={{ display: 'flex', gap: 18, fontSize: '.8rem', color: 'var(--text-muted)', marginBottom: 20 }}>
+                    <span><b style={{ color: 'var(--source-glass)' }}>●</b> GLASS (R)</span>
+                    <span><b style={{ color: 'var(--source-ecdc)' }}>●</b> ECDC (I+R)</span>
+                  </div>
+                  <h4 style={{ marginBottom: 10 }}>Average change for each year</h4>
+                  <div className="data-table-container">
+                    <table className="data-table">
+                      <thead><tr><th>Reporting year</th><th>GLASS average change</th><th>ECDC average change</th></tr></thead>
+                      <tbody>{years.map((year) => {
+                        const glass = rows.find((row) => row.source === 'glass' && row.year === year);
+                        const ecdc = rows.find((row) => row.source === 'ecdc' && row.year === year);
+                        return <tr key={year}><td>{year}</td><td>{glass ? `${glass.change.toFixed(2)} pp` : '—'}</td><td>{ecdc ? `${ecdc.change.toFixed(2)} pp` : '—'}</td></tr>;
+                      })}</tbody>
+                    </table>
+                  </div>
+                </>
+              );
+            })()}
+            <p className="explainer" style={{ marginTop: 16 }}>
+              Positive values mean an increase; negative values mean a decrease. For example, 20% to 25% is a rise of 5 percentage points. The yearly chart shows average changes across available country–pathogen–antibiotic series, not the change for every series. The “5+ points” cards count changes of that size only; they do not apply the statistical test and sample-size rules used for the project’s rising-alert target. GLASS and ECDC use different resistance definitions, so read their lines separately.
+            </p>
           </div>
         </div>
       )}
 
-      {/* TAB 5: Target Class Balance */}
-      {activeTab === 'balance' && (
-        <div>
-          <div className="card" style={{ marginBottom: 24 }}>
-            <h3 style={{ fontSize: '1.15rem', marginBottom: 12 }}>Target Prevalence Across Surveillance Thresholds</h3>
-            <div className="data-table-container">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Surveillance Flag / Target</th>
-                    <th>GLASS-AMR</th>
-                    <th>ECDC-derived</th>
-                    <th>Pooled Combined</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><strong>High-Risk (T = 20%)</strong></td>
-                    <td style={{ color: 'var(--source-glass)' }}>{balanceData?.class_balance?.glass?.high_risk_20 != null ? `${(balanceData.class_balance.glass.high_risk_20 * 100).toFixed(1)}%` : '—'}</td>
-                    <td style={{ color: 'var(--source-ecdc)' }}>{balanceData?.class_balance?.ecdc?.high_risk_20 != null ? `${(balanceData.class_balance.ecdc.high_risk_20 * 100).toFixed(1)}%` : '—'}</td>
-                    <td>—</td>
-                  </tr>
-                  <tr>
-                    <td><strong>High-Risk (T = 30%, Primary)</strong></td>
-                    <td style={{ color: 'var(--source-glass)', fontWeight: 600 }}>{balanceData?.class_balance?.glass?.high_risk_30 != null ? `${(balanceData.class_balance.glass.high_risk_30 * 100).toFixed(1)}%` : '—'}</td>
-                    <td style={{ color: 'var(--source-ecdc)', fontWeight: 600 }}>{balanceData?.class_balance?.ecdc?.high_risk_30 != null ? `${(balanceData.class_balance.ecdc.high_risk_30 * 100).toFixed(1)}%` : '—'}</td>
-                    <td>—</td>
-                  </tr>
-                  <tr>
-                    <td><strong>High-Risk (T = 50%)</strong></td>
-                    <td style={{ color: 'var(--source-glass)' }}>{balanceData?.class_balance?.glass?.high_risk_50 != null ? `${(balanceData.class_balance.glass.high_risk_50 * 100).toFixed(1)}%` : '—'}</td>
-                    <td style={{ color: 'var(--source-ecdc)' }}>{balanceData?.class_balance?.ecdc?.high_risk_50 != null ? `${(balanceData.class_balance.ecdc.high_risk_50 * 100).toFixed(1)}%` : '—'}</td>
-                    <td>—</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Rising Acceleration (+5 pp &amp; p &lt; 0.05)</strong></td>
-                    <td style={{ color: 'var(--accent-rose)', fontWeight: 600 }}>{balanceData?.class_balance?.glass?.rising_next != null ? `${(balanceData.class_balance.glass.rising_next * 100).toFixed(1)}%` : '—'}</td>
-                    <td style={{ color: 'var(--accent-rose)', fontWeight: 600 }}>{balanceData?.class_balance?.ecdc?.rising_next != null ? `${(balanceData.class_balance.ecdc.rising_next * 100).toFixed(1)}%` : '—'}</td>
-                    <td>—</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div className="explainer">
-              Notice the extreme imbalance in <code>rising_next</code> (6.7% in ECDC, 16.9% in GLASS). This dictates why PR-AUC is our primary evaluation metric and class weighting is mandatory.
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 6: Cross-Resistance */}
+      {/* TAB 4: Antibiotic Patterns */}
       {activeTab === 'correlation' && (
         <div>
           <div className="card" style={{ marginBottom: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: '1.15rem' }}>Cross-Resistance Correlation Matrix</h3>
+              <h3 style={{ fontSize: '1.15rem' }}>Do antibiotic resistance rates move together?</h3>
               <select
                 className="form-select"
                 style={{ width: 220 }}
@@ -465,77 +477,16 @@ export default function EdaExplorer({ scope, source }) {
                 </div>
               </div>
             ) : (
-              <p style={{ color: 'var(--text-muted)' }}>Loading correlation matrix...</p>
+              <p style={{ color: 'var(--text-muted)' }}>Loading antibiotic pattern results...</p>
             )}
 
             <div className="explainer">
-              Carbapenems (Meropenem, Imipenem) and 3rd-gen cephalosporins (Ceftriaxone, Ceftazidime) exhibit correlations &gt; 0.85, confirming strong co-resistance signals utilized by our <code>mdr_burden</code> and <code>class_mean_other</code> features.
+              Values near +1 mean two antibiotics’ reported resistance rates tend to move together; values near 0 mean little linear relationship, and negative values mean they tend to move in opposite directions. A relationship does not prove one resistance causes the other or that a patient’s infection is resistant to both.
             </div>
           </div>
         </div>
       )}
 
-      {/* TAB 7: Data Issues & Decisions */}
-      {activeTab === 'issues' && (
-        <div className="card">
-          <h3 style={{ fontSize: '1.15rem', marginBottom: 16 }}>Surveillance Realities & Modeling Countermeasures</h3>
-          <div className="data-table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Surveillance Issue</th>
-                  <th>Observed Empirical Data Reality</th>
-                  <th>Pipeline Modeling Mitigation</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>1</td>
-                  <td><strong>Definition Mismatch</strong></td>
-                  <td>ECDC is I+R; GLASS is R. ECDC runs ~2–3 pp higher in Malta overlap.</td>
-                  <td>All models evaluated in 3 configurations: <code>glass</code>, <code>ecdc</code>, and <code>pooled</code>. Never averaged naively.</td>
-                </tr>
-                <tr>
-                  <td>2</td>
-                  <td><strong>Small Sample Noise</strong></td>
-                  <td>5.3% of GLASS rows have N &lt; 30, producing artificial 0/100% volatility.</td>
-                  <td>Classification targets strictly require N ≥ 30 in both consecutive years. Sample size features included.</td>
-                </tr>
-                <tr>
-                  <td>3</td>
-                  <td><strong>Temporal Panel Disparity</strong></td>
-                  <td>GLASS has 6 years (2018–2023); ECDC has 21 years (1999–2019).</td>
-                  <td>Strict time-ordered splits with forward-chaining rolling-origin folds; no random cross-validation.</td>
-                </tr>
-                <tr>
-                  <td>4</td>
-                  <td><strong>COVID-19 Disruption</strong></td>
-                  <td>2020 experienced diagnostic capacity shifts during the pandemic.</td>
-                  <td>Added explicit <code>covid_flag</code> feature for target year 2020 rather than discarding records.</td>
-                </tr>
-                <tr>
-                  <td>5</td>
-                  <td><strong>AST Coverage Gaps</strong></td>
-                  <td>Reported in GLASS; entirely unrecorded in ECDC.</td>
-                  <td>Excluded in ECDC models; imputed with training median plus missing indicator in pooled model.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Key Takeaway */}
-      <div className="takeaway-box">
-        <CheckCircle2 size={24} color="#34d399" style={{ flexShrink: 0, marginTop: 2 }} />
-        <div>
-          <h4>Key Takeaway: Empirical Surveillance Signals</h4>
-          <p>
-            Surveillance series exhibit strong inertia punctuated by acute sample-size noise under N &lt; 30 and strong carbapenem co-resistance. Our feature derivations specifically exploit cross-resistance co-occurrence while filtering small-sample artifacts.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

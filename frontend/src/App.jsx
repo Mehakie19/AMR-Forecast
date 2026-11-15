@@ -6,11 +6,9 @@ import {
   FlaskConical,
   LineChart,
   ClipboardList,
-  HelpCircle,
   AlertTriangle,
   Radio,
-  CheckCircle,
-  Database
+  Globe2,
 } from 'lucide-react';
 
 import { api } from './api';
@@ -20,10 +18,10 @@ import FeatureEngineering from './pages/FeatureEngineering';
 import ModelLab from './pages/ModelLab';
 import ForecastExplorer from './pages/ForecastExplorer';
 import SurveillanceWatchlist from './pages/SurveillanceWatchlist';
-import MethodsLimitations from './pages/MethodsLimitations';
+import IntelligenceOverview from './pages/IntelligenceOverview';
 
 const DISCLAIMER_TEXT =
-  "Surveillance and research tool. Not for treatment decisions. Predicted resistance is not the probability of clinical cure. 'High risk' and 'rising' thresholds are project-defined.";
+  "Research and surveillance only—not for choosing treatment or antibiotic doses. 'High risk' and 'rising' are project alert categories, not patient-level clinical measures.";
 
 const COMBINED_NOTICE =
   "Sources use different resistance definitions (GLASS: R; ECDC: I+R). Do not compare levels directly.";
@@ -51,13 +49,13 @@ export default function App() {
   }, [sourceParam]);
 
   const navItems = [
-    { id: 'overview', label: '1. Dataset Overview', icon: LayoutDashboard },
-    { id: 'eda', label: '2. EDA Explorer', icon: BarChart2 },
-    { id: 'features', label: '3. Feature Engineering', icon: FileCode },
-    { id: 'models', label: '4. Model Lab & Results', icon: FlaskConical },
-    { id: 'forecast', label: '5. Forecast Explorer', icon: LineChart },
-    { id: 'watchlist', label: '6. Surveillance Watchlist', icon: ClipboardList },
-    { id: 'methods', label: '7. Methods & Roadmap', icon: HelpCircle },
+    { id: 'intelligence', label: '1. Visual overview', icon: Globe2 },
+    { id: 'overview', label: '2. Dataset Overview', icon: LayoutDashboard },
+    { id: 'eda', label: '3. Explore data', icon: BarChart2 },
+    { id: 'features', label: '4. Model inputs', icon: FileCode },
+    { id: 'models', label: '5. Model results', icon: FlaskConical },
+    { id: 'forecast', label: '6. Five-year forecast', icon: LineChart },
+    { id: 'watchlist', label: '7. Results to review', icon: ClipboardList },
   ];
 
   return (
@@ -78,14 +76,14 @@ export default function App() {
               AMR-Sense <span className="badge">Phase 1</span>
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 4 }}>
-              Explainable AMR Surveillance &amp; Early Warning
+              Antibiotic resistance surveillance
             </div>
           </div>
 
           {/* Scope Selector */}
           <div className="sidebar-scope">
             <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 600, display: 'block', marginBottom: 6 }}>
-              DATA SCOPE
+              DATA SOURCE
             </label>
             <select
               className="form-select"
@@ -153,7 +151,7 @@ export default function App() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <span>Rows in Scope: <strong>{summary?.rows?.toLocaleString() ?? '—'}</strong></span>
+              <span>Reported observations: <strong>{summary?.rows?.toLocaleString() ?? '—'}</strong></span>
               <span className="status-badge" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
                 {health?.frozen ? 'Models Frozen (Test Unlocked)' : 'Models Frozen'}
               </span>
@@ -161,13 +159,13 @@ export default function App() {
           </div>
 
           {/* Active View */}
+          {activePage === 'intelligence' && <IntelligenceOverview key={sourceParam} source={sourceParam} />}
           {activePage === 'overview' && <DatasetOverview scope={scope} source={sourceParam} />}
           {activePage === 'eda' && <EdaExplorer scope={scope} source={sourceParam} />}
           {activePage === 'features' && <FeatureEngineering scope={scope} source={sourceParam} />}
           {activePage === 'models' && <ModelLab scope={scope} />}
           {activePage === 'forecast' && <ForecastExplorer scope={scope} source={sourceParam} />}
           {activePage === 'watchlist' && <SurveillanceWatchlist scope={scope} source={sourceParam} />}
-          {activePage === 'methods' && <MethodsLimitations />}
         </main>
       </div>
     </div>

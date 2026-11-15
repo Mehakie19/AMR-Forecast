@@ -41,6 +41,18 @@ def test_datasets_summary():
     assert "disclaimer" in body
 
 
+def test_intelligence_overview():
+    r = client.get("/intelligence/overview?source=glass")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["source"] == "glass"
+    assert body["resistance_definition"] == "R"
+    assert body["high_resistance_threshold_pct"] == 40
+    assert body["countries"]
+    assert body["hotspots"]
+    assert body["important_pathogens"]
+
+
 def test_datasets_quality():
     r = client.get("/datasets/quality")
     assert r.status_code == 200

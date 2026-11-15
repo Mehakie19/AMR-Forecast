@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
-import { Database, Activity, MapPin, Calendar, AlertTriangle, Layers, CheckCircle2 } from 'lucide-react';
+import { Database, Activity, MapPin, Calendar, AlertTriangle, Layers } from 'lucide-react';
 
 export default function DatasetOverview({ scope, source }) {
   const [summary, setSummary] = useState(null);
@@ -61,49 +61,48 @@ export default function DatasetOverview({ scope, source }) {
     <div>
       <div style={{ marginBottom: 24 }}>
         <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: 8 }}>
-          Dataset Overview & Surveillance Coverage
+          What data does AMR-Sense use?
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Single source of truth: <code>data/raw/combined_amr_dataset.csv</code> (6,634 records across 42 countries).
+          A summary of the selected surveillance source, its coverage, and checks that affect how results should be read.
         </p>
       </div>
 
       {/* KPI Cards */}
       <div className="kpi-grid">
         <div className="kpi-card">
-          <div className="kpi-label">Total Surveillance Records</div>
+          <div className="kpi-label">Reported observations</div>
           <div className="kpi-value">{summary?.rows?.toLocaleString() ?? '—'}</div>
-          <div className="kpi-sub">Harmonized observations</div>
+          <div className="kpi-sub">One reported resistance result</div>
         </div>
         <div className="kpi-card">
-          <div className="kpi-label">Unique Series</div>
+          <div className="kpi-label">Country–pathogen–antibiotic series</div>
           <div className="kpi-value">{summary?.series?.toLocaleString() ?? '—'}</div>
-          <div className="kpi-sub">ISO3 × Pathogen × Antibiotic</div>
+          <div className="kpi-sub">A series follows one combination over time</div>
         </div>
         <div className="kpi-card">
-          <div className="kpi-label">Jurisdictions / Countries</div>
+          <div className="kpi-label">Countries or jurisdictions</div>
           <div className="kpi-value">{summary?.countries ?? '—'}</div>
-          <div className="kpi-sub">31 GLASS + 27 ECDC (Malta overlaps)</div>
+          <div className="kpi-sub">Count for the selected source or combined set</div>
         </div>
         <div className="kpi-card">
-          <div className="kpi-label">Longitudinal Span</div>
+          <div className="kpi-label">Years covered</div>
           <div className="kpi-value">
-            {summary?.years ? `${summary.years[0]}–${summary.years[1]}` : '1999–2023'}
+            {summary?.years ? `${summary.years[0]}–${summary.years[1]}` : '—'}
           </div>
-          <div className="kpi-sub">25 surveillance years</div>
+          <div className="kpi-sub">The first and last reported years</div>
         </div>
         <div className="kpi-card">
-          <div className="kpi-label">Pathogen Families</div>
+          <div className="kpi-label">Pathogens covered</div>
           <div className="kpi-value">{summary?.pathogens?.length ?? '—'}</div>
-          <div className="kpi-sub">E. coli, K. pneumoniae, Acinetobacter</div>
+          <div className="kpi-sub">Bacteria included in this data set</div>
         </div>
         <div className="kpi-card">
-          <div className="kpi-label">Target Antibiotics</div>
+          <div className="kpi-label">Antibiotics covered</div>
           <div className="kpi-value">{summary?.antibiotics?.length ?? '—'}</div>
-          <div className="kpi-sub">Carbapenems, Cephalosporins, etc.</div>
+          <div className="kpi-sub">Drugs included in surveillance reports</div>
         </div>
       </div>
-
       {/* Per-Source Breakdown Banner */}
       {scope === 'Combined' && glassSum && ecdcSum && (
         <div
@@ -133,9 +132,9 @@ export default function DatasetOverview({ scope, source }) {
               <strong style={{ color: '#fff', fontSize: '1rem' }}>WHO GLASS-AMR</strong>
             </div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-              <div>• Records: <strong>{glassSum.rows?.toLocaleString()}</strong> (399 series × 6 rounds)</div>
-              <div>• Window: <strong>2018 – 2023</strong> (Balanced panel)</div>
-              <div>• Definition: <strong>R (Resistant)</strong> as reported by GLASS</div>
+              <div>• Observations: <strong>{glassSum.rows?.toLocaleString()}</strong> across {glassSum.countries} countries</div>
+              <div>• Years covered: <strong>{glassSum.years?.[0]}–{glassSum.years?.[1]}</strong></div>
+              <div>• Resistance counted: <strong>Resistant (R)</strong></div>
               <div>• Setting: Bloodstream infection isolates</div>
             </div>
           </div>
@@ -159,9 +158,9 @@ export default function DatasetOverview({ scope, source }) {
               <strong style={{ color: '#fff', fontSize: '1rem' }}>ECDC EARS-Net (Derived)</strong>
             </div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-              <div>• Records: <strong>{ecdcSum.rows?.toLocaleString()}</strong> (Unbalanced panel)</div>
-              <div>• Window: <strong>1999 – 2019</strong> (21 rounds)</div>
-              <div>• Definition: <strong>I+R (Intermediate + Resistant)</strong></div>
+              <div>• Observations: <strong>{ecdcSum.rows?.toLocaleString()}</strong> across {ecdcSum.countries} countries</div>
+              <div>• Years covered: <strong>{ecdcSum.years?.[0]}–{ecdcSum.years?.[1]}</strong></div>
+              <div>• Resistance counted: <strong>Intermediate or resistant (I+R)</strong></div>
               <div>• Setting: Inpatient invasive blood & CSF isolates</div>
             </div>
           </div>
@@ -170,7 +169,7 @@ export default function DatasetOverview({ scope, source }) {
 
       {/* Source Comparison Table */}
       <div className="card" style={{ marginBottom: 28 }}>
-        <h3 style={{ fontSize: '1.15rem', marginBottom: 16 }}>Surveillance Source Provenance & Schema Specification</h3>
+        <h3 style={{ fontSize: '1.15rem', marginBottom: 16 }}>How the two data sources differ</h3>
         <div className="data-table-container">
           <table className="data-table">
             <thead>
@@ -182,54 +181,48 @@ export default function DatasetOverview({ scope, source }) {
             </thead>
             <tbody>
               <tr>
-                <td><strong>Publisher / Repository</strong></td>
+                <td><strong>Data publisher / source</strong></td>
                 <td>World Health Organization (GLASS Dashboard export)</td>
                 <td>Zenodo record 14224680 (Emons, Blanquart, Lehtinen)</td>
               </tr>
               <tr>
-                <td><strong>Temporal Horizon</strong></td>
+                <td><strong>Years covered</strong></td>
                 <td>2018 – 2023 (6 annual rounds)</td>
                 <td>1999 – 2019 (21 annual rounds)</td>
               </tr>
               <tr>
-                <td><strong>Geographic Scope</strong></td>
+                <td><strong>Countries included</strong></td>
                 <td>31 participating countries across 5 WHO regions</td>
                 <td>27 European countries in this combined dataset</td>
               </tr>
               <tr>
-                <td><strong>Resistance Metric</strong></td>
+                <td><strong>What counts as resistant</strong></td>
                 <td><strong>R</strong> (Resistant as defined by GLASS)</td>
                 <td><strong>I+R</strong> (Intermediate + Resistant combined)</td>
               </tr>
               <tr>
-                <td><strong>Sample Size Policy</strong></td>
-                <td>~5.3% of rows have N &lt; 30 (noisy surveillance)</td>
-                <td>Pre-filtered to N ≥ 30 isolates per observation</td>
-              </tr>
-              <tr>
-                <td><strong>Key Overlap Cases</strong></td>
-                <td colSpan={2} style={{ textAlign: 'center', color: '#fde68a' }}>
-                  8 records in Malta (2018–2019, 2 series pairs). ECDC rates run ~2–3 pp higher due to I+R inclusion.
-                </td>
+                <td><strong>Number of tests</strong></td>
+                <td>About 5.3% of reports have fewer than 30 tests</td>
+                <td>Records have at least 30 tests per observation</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
-
       {/* Coverage & Quality Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 20 }}>
         {/* Top Reporting Countries */}
         <div className="card">
-          <h3 style={{ fontSize: '1.1rem', marginBottom: 14 }}>Top Reporting Surveillance Jurisdictions</h3>
+          <h3 style={{ fontSize: '1.1rem', marginBottom: 14 }}>Countries with the most reported data</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Counts add the available series records across years; they do not measure disease burden or population size.</p>
           <div className="data-table-container">
             <table className="data-table">
               <thead>
                 <tr>
                   <th>ISO3</th>
                   <th>Country</th>
-                  <th>Series Records</th>
-                  <th>Active Years</th>
+                  <th>Reports across years</th>
+                  <th>Years with reports</th>
                 </tr>
               </thead>
               <tbody>
@@ -251,19 +244,19 @@ export default function DatasetOverview({ scope, source }) {
           <h3 style={{ fontSize: '1.1rem', marginBottom: 14 }}>Data Quality & Overlap Audit</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
             <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: 12, borderRadius: 8 }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>PRIMARY KEY DUPLICATES</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>DUPLICATE RECORDS</div>
               <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#34d399' }}>{quality?.duplicates ?? '—'}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>100% uniquely identified</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Same country, pathogen, antibiotic, and year repeated</div>
             </div>
             <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: 12, borderRadius: 8 }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>GLASS N &lt; 30 SHARE</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>GLASS REPORTS WITH FEWER THAN 30 TESTS</div>
               <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#f87171' }}>{quality?.n_lt_30_share?.glass != null ? `${(quality.n_lt_30_share.glass * 100).toFixed(1)}%` : '—'}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Excluded from classification</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Classification needs 30+ tests in both years</div>
             </div>
           </div>
 
           <h4 style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 8 }}>
-            Malta Overlap Audit (Identical Series in 2018–2019):
+            Example overlap: Malta (2018–2019)
           </h4>
           <div className="data-table-container">
             <table className="data-table" style={{ fontSize: '0.8rem' }}>
@@ -285,21 +278,11 @@ export default function DatasetOverview({ scope, source }) {
             </table>
           </div>
           <div className="explainer" style={{ marginTop: 10 }}>
-            ECDC values systematically run ~2–3 pp higher because ECDC includes Intermediate isolates, verifying why models must run in dedicated and source-flagged configurations.
+            The paired entries show measurements for the same country, pathogen, antibiotic, and year. Any difference can reflect both the sources’ different definitions and reporting; this small overlap does not establish a general offset between sources.
           </div>
         </div>
       </div>
 
-      {/* Key Takeaway */}
-      <div className="takeaway-box">
-        <CheckCircle2 size={24} color="#34d399" style={{ flexShrink: 0, marginTop: 2 }} />
-        <div>
-          <h4>Key Takeaway: Rigorous Single Source of Truth</h4>
-          <p>
-            The harmonized dataset provides 6,634 surveillance observations across 42 countries. GLASS supplies a balanced 6-year panel (2018–2023), while ECDC supplies 21 years of longitudinal depth (1999–2019). Because resistance definitions differ (R vs I+R), our modeling pipelines strictly isolate definitions rather than naively blending them.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

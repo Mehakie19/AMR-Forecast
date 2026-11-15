@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
-import { AlertCircle, Download, Search, Filter, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, Download, Search, Filter, ShieldAlert } from 'lucide-react';
 
 export default function SurveillanceWatchlist({ scope, source }) {
   const [watchlist, setWatchlist] = useState([]);
   const [sortBy, setSortBy] = useState('high_risk_probability');
   const [filterPathogen, setFilterPathogen] = useState('');
   const [filterAbx, setFilterAbx] = useState('');
-  const [minTested, setMinTested] = useState(30);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -16,13 +15,12 @@ export default function SurveillanceWatchlist({ scope, source }) {
       source,
       pathogen: filterPathogen,
       antibiotic: filterAbx,
-      min_tested: minTested,
-      sort: sortBy,
+      sort_by: sortBy,
     })
-      .then((data) => setWatchlist(data?.items || []))
+      .then((data) => setWatchlist(data?.rows || data?.items || []))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
-  }, [source, filterPathogen, filterAbx, minTested, sortBy]);
+  }, [source, filterPathogen, filterAbx, sortBy]);
 
   const highRiskCount = watchlist.filter((item) => (item.high_risk_probability || 0) >= 0.4).length;
   const risingCount = watchlist.filter((item) => (item.rising_probability || 0) >= 0.2).length;
@@ -53,37 +51,36 @@ export default function SurveillanceWatchlist({ scope, source }) {
     <div>
       <div style={{ marginBottom: 20 }}>
         <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: 8 }}>
-          Surveillance Watchlist: Candidates for Expert Review
+          Results to review
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Prioritised surveillance series ranked by predicted next-year resistance risk and acute acceleration signals.
+          A filtered list of country, pathogen, and antibiotic reports whose model scores may merit a closer look.
         </p>
       </div>
 
       {/* Summary Tiles */}
       <div className="kpi-grid" style={{ marginBottom: 24 }}>
         <div className="kpi-card">
-          <div className="kpi-label">Active Series in Scope</div>
+          <div className="kpi-label">Series shown</div>
           <div className="kpi-value">{watchlist.length}</div>
-          <div className="kpi-sub">Latest observed round</div>
+          <div className="kpi-sub">After applying the filters</div>
         </div>
         <div className="kpi-card" style={{ borderLeft: '3px solid #f43f5e' }}>
-          <div className="kpi-label">High-Risk Candidates</div>
+          <div className="kpi-label">High-risk review candidates</div>
           <div className="kpi-value" style={{ color: '#f87171' }}>{highRiskCount}</div>
-          <div className="kpi-sub">P(Res ≥ 30%) ≥ 40%</div>
+          <div className="kpi-sub">Model score ≥ 40% for next-year resistance ≥ 30%</div>
         </div>
         <div className="kpi-card" style={{ borderLeft: '3px solid #f59e0b' }}>
-          <div className="kpi-label">Acceleration Signals</div>
+          <div className="kpi-label">Possible rising signals</div>
           <div className="kpi-value" style={{ color: '#fbbf24' }}>{risingCount}</div>
-          <div className="kpi-sub">P(Rise ≥ 5 pp) ≥ 20%</div>
+          <div className="kpi-sub">Model score ≥ 20% for a qualifying rise</div>
         </div>
         <div className="kpi-card" style={{ borderLeft: '3px solid #64748b' }}>
-          <div className="kpi-label">Small Sample Flags</div>
+          <div className="kpi-label">Fewer than 30 tests</div>
           <div className="kpi-value" style={{ color: '#94a3b8' }}>{noisyCount}</div>
-          <div className="kpi-sub">N &lt; 30 (high variance)</div>
+          <div className="kpi-sub">Percentages may be less stable</div>
         </div>
       </div>
-
       {/* Table Controls */}
       <div
         className="card"
@@ -131,17 +128,17 @@ export default function SurveillanceWatchlist({ scope, source }) {
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
-            <option value="high_risk_probability">Sort: High Risk Prob</option>
-            <option value="rising_probability">Sort: Rising Prob</option>
-            <option value="forecast_pct">Sort: Forecast %</option>
-            <option value="latest_resistance_pct">Sort: Latest Resistance</option>
-            <option value="number_tested">Sort: Sample Size N</option>
+            <option value="high_risk_probability">Sort: high-risk score</option>
+            <option value="rising_probability">Sort: rising score</option>
+            <option value="forecast_pct">Sort: next-year forecast</option>
+            <option value="latest_resistance_pct">Sort: latest reported resistance</option>
+            <option value="number_tested">Sort: number of tests</option>
           </select>
         </div>
 
         <button className="btn btn-primary" onClick={downloadCsv}>
           <Download size={16} />
-          Export Candidates CSV
+          Export filtered rows
         </button>
       </div>
 
@@ -155,13 +152,13 @@ export default function SurveillanceWatchlist({ scope, source }) {
                 <th>Country</th>
                 <th>Pathogen</th>
                 <th>Antibiotic</th>
-                <th>Latest Yr</th>
-                <th>Observed %</th>
-                <th>Tested N</th>
-                <th>Forecast %</th>
-                <th>High Risk Prob</th>
-                <th>Rising Prob</th>
-                <th>Data Flag</th>
+                <th title="Most recent year with a reported observation">Latest year</th>
+                <th title="Reported resistance percentage, not a model score">Latest reported %</th>
+                <th title="Number of tested isolates in the latest observation">Tests</th>
+                <th title="Model's estimate of next year's resistance percentage">Next-year estimate</th>
+                <th title="Estimated chance of meeting the project's high-risk category">High-risk score</th>
+                <th title="Estimated chance of meeting the project's rising category">Rising score</th>
+                <th title="Data-quality indicator attached to the series">Data note</th>
               </tr>
             </thead>
             <tbody>
@@ -222,19 +219,9 @@ export default function SurveillanceWatchlist({ scope, source }) {
       </div>
 
       <div style={{ marginTop: 12, fontSize: '0.8rem', color: 'var(--text-dim)' }}>
-        Note: Candidates for expert review. Prioritization indicates statistical triage for laboratory verification and public health audit, not automated treatment recommendations.
+        The model’s estimates are not observed results. Prioritization supports surveillance review only; it does not recommend treatment.
       </div>
 
-      {/* Key Takeaway */}
-      <div className="takeaway-box">
-        <CheckCircle2 size={24} color="#34d399" style={{ flexShrink: 0, marginTop: 2 }} />
-        <div>
-          <h4>Key Takeaway: Surveillance Triage Protocol</h4>
-          <p>
-            The surveillance watchlist integrates latest-round prevalence with calibrated ML risk projections. Public health teams can filter by pathogen and export the triage list for retrospective audit and antimicrobial stewardship monitoring.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

@@ -37,6 +37,12 @@ export const api = {
     if (antibiotic) q.set('antibiotic', antibiotic);
     return fetchJson(`/datasets/coverage?${q}`);
   },
+  getIntelligenceOverview: (source = 'glass', pathogen = '', antibiotic = '') => {
+    const q = new URLSearchParams({ source });
+    if (pathogen) q.set('pathogen', pathogen);
+    if (antibiotic) q.set('antibiotic', antibiotic);
+    return fetchJson(`/intelligence/overview?${q}`);
+  },
   getDatasetsQuality: () => fetchJson('/datasets/quality'),
   getEdaDistribution: (source = 'combined') => fetchJson(`/eda/distribution?source=${source}`),
   getEdaTrend: (source = 'combined') => fetchJson(`/eda/trend?source=${source}`),

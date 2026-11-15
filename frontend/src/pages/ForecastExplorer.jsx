@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
-import { TrendingUp, AlertTriangle, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
+import { TrendingUp, AlertTriangle, ShieldAlert, Sparkles } from 'lucide-react';
 
 export default function ForecastExplorer({ scope, source }) {
   const [selectedSource, setSelectedSource] = useState('glass');
@@ -12,6 +12,7 @@ export default function ForecastExplorer({ scope, source }) {
   const [history, setHistory] = useState([]);
   const [seriesOptions, setSeriesOptions] = useState([]);
   const [prediction, setPrediction] = useState(null);
+  const [predictionError, setPredictionError] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const availCountries = [...new Set(seriesOptions.map((item) => item.iso3))];
@@ -40,6 +41,8 @@ export default function ForecastExplorer({ scope, source }) {
 
   useEffect(() => {
     setLoading(true);
+    setPrediction(null);
+    setPredictionError(null);
     api.getSeriesHistory(selectedSource, iso3, pathogen, antibiotic)
       .then((data) => setHistory(data?.history || data?.records || []))
       .catch((err) => console.error(err));
@@ -52,26 +55,62 @@ export default function ForecastExplorer({ scope, source }) {
       model_config: modelConfig,
     })
       .then((pred) => setPrediction(pred))
-      .catch((err) => console.error(err))
+      .catch((err) => {
+        console.error(err);
+        setPredictionError(err.message);
+      })
       .finally(() => setLoading(false));
   }, [selectedSource, iso3, pathogen, antibiotic, modelConfig]);
 
   const lastObs = history[history.length - 1];
   const lastYear = lastObs?.year || 2023;
   const targetYear = lastYear + 1;
-  const forecastVal = prediction?.forecast_pct ?? lastObs?.pct_resistant ?? 0;
   const persVal = lastObs?.pct_resistant ?? 0;
+  const hasForecast = Number.isFinite(prediction?.forecast_pct);
+  const forecastVal = hasForecast ? prediction.forecast_pct : 0;
+  const forecastRows = prediction?.forecast_horizons || [];
+  const resistanceThreshold = prediction?.high_resistance_threshold_pct ?? 40;
+  const allChartYears = [
+    ...history.map((point) => point.year),
+    ...forecastRows.filter((point) => Number.isFinite(point.forecast_pct)).map((point) => point.year),
+  ];
+  const chartMinYear = allChartYears.length ? Math.min(...allChartYears) : lastYear;
+  const chartMaxYear = allChartYears.length ? Math.max(...allChartYears) : lastYear + 5;
+  const chartX = (year) => 50 + ((year - chartMinYear) / Math.max(1, chartMaxYear - chartMinYear)) * 650;
+  const chartY = (value) => 170 - Math.max(0, Math.min(100, value)) * 1.5;
+  const historyPath = history.map((point) => `${chartX(point.year)},${chartY(point.pct_resistant)}`).join(' ');
+  const forecastPoints = [
+    ...(lastObs ? [{ year: lastYear, pct_resistant: persVal }] : []),
+    ...forecastRows.filter((point) => Number.isFinite(point.forecast_pct))
+      .map((point) => ({ year: point.year, pct_resistant: point.forecast_pct })),
+  ];
+  const forecastPath = forecastPoints.map((point) => `${chartX(point.year)},${chartY(point.pct_resistant)}`).join(' ');
 
   return (
     <div>
       <div style={{ marginBottom: 20 }}>
         <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: 8 }}>
-          Interactive Surveillance Forecast Explorer
+          Explore a five-year forecast
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Real-time next-year predictive inference synthesising temporal inertia, sample volatility, and cross-resistance context.
+          Choose a source and surveillance series to compare reported history with a separate direct model estimate for each of the next five years.
         </p>
       </div>
+      {predictionError && (
+        <div
+          role="alert"
+          style={{
+            marginBottom: 20,
+            padding: '12px 16px',
+            border: '1px solid rgba(248, 113, 113, 0.4)',
+            borderRadius: 8,
+            background: 'rgba(127, 29, 29, 0.2)',
+            color: '#fecaca',
+          }}
+        >
+          <strong>Prediction unavailable:</strong> {predictionError}
+        </div>
+      )}
 
       {/* Selectors Bar */}
       <div
@@ -85,7 +124,7 @@ export default function ForecastExplorer({ scope, source }) {
         }}
       >
         <div>
-          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 600 }}>SOURCE SYSTEM</label>
+          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 600 }}>DATA SOURCE</label>
           <select
             className="form-select"
             value={selectedSource}
@@ -97,7 +136,7 @@ export default function ForecastExplorer({ scope, source }) {
         </div>
 
         <div>
-          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 600 }}>COUNTRY (ISO3)</label>
+          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 600 }} title="ISO3 is the standard three-letter country code">COUNTRY</label>
           <select
             className="form-select"
             value={iso3}
@@ -110,7 +149,7 @@ export default function ForecastExplorer({ scope, source }) {
         </div>
 
         <div>
-          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 600 }}>PATHOGEN</label>
+          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 600 }} title="The bacterium being monitored">PATHOGEN</label>
           <select
             className="form-select"
             value={pathogen}
@@ -121,7 +160,7 @@ export default function ForecastExplorer({ scope, source }) {
         </div>
 
         <div>
-          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 600 }}>ANTIBIOTIC TARGET</label>
+          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 600 }}>ANTIBIOTIC</label>
           <select
             className="form-select"
             value={antibiotic}
@@ -132,131 +171,133 @@ export default function ForecastExplorer({ scope, source }) {
         </div>
 
         <div>
-          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 600 }}>MODEL SUITE</label>
+          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 600 }} title="A dedicated model uses one source; a pooled model uses data from both sources">MODEL</label>
           <select
             className="form-select"
             value={modelConfig}
             onChange={(e) => setModelConfig(e.target.value)}
           >
             <option value={selectedSource}>{selectedSource.toUpperCase()} Dedicated</option>
-            <option value="pooled">Pooled Ensemble</option>
+            <option value="pooled">Pooled model</option>
           </select>
         </div>
       </div>
 
-      {/* Main Trajectory Visualizer */}
       <div className="card" style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
             <h3 style={{ fontSize: '1.2rem', color: '#fff' }}>
-              Surveillance Trajectory: <span style={{ color: 'var(--accent-cyan)' }}>{iso3}</span> — {pathogen} / {antibiotic}
+              Reported history: <span style={{ color: 'var(--accent-cyan)' }}>{iso3}</span> — {pathogen} / {antibiotic}
             </h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Historical annual observations + Machine Learning forecast for year {targetYear}
+              Reported values through {lastYear}; separate estimates for {targetYear}–{lastYear + 5}
             </span>
           </div>
           <div style={{ display: 'flex', gap: 12, fontSize: '0.78rem' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#3b82f6' }} />
-              Observed (N ≥ 30)
+              30+ tests
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ width: 10, height: 10, borderRadius: '50%', border: '2px solid #ef4444' }} />
-              Low sample (N &lt; 30)
+              Fewer than 30 tests
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ width: 12, height: 2, background: '#10b981' }} />
-              ML Forecast
+              Direct model forecast
             </span>
           </div>
         </div>
 
-        {/* SVG Interactive Trajectory Chart */}
         <div style={{ position: 'relative', height: 260, background: 'rgba(15, 23, 42, 0.5)', borderRadius: 8, padding: '20px 20px 30px' }}>
-          <svg width="100%" height="100%" viewBox="0 0 760 200">
-            {/* Gridlines */}
-            {[0, 25, 50, 75, 100].map((v) => (
-              <line
-                key={v}
-                x1="40"
-                y1={170 - v * 1.5}
-                x2="740"
-                y2={170 - v * 1.5}
-                stroke="rgba(255,255,255,0.06)"
-                strokeDasharray="4 4"
-              />
+          <svg width="100%" height="100%" viewBox="0 0 760 200" role="img" aria-label="Reported resistance and five-year resistance forecast">
+            {[0, 25, 50, 75, 100].map((value) => (
+              <g key={value}>
+                <line x1="40" y1={chartY(value)} x2="740" y2={chartY(value)} stroke="rgba(255,255,255,0.06)" strokeDasharray="4 4" />
+                <text x="34" y={chartY(value) + 4} fill="var(--text-dim)" fontSize="9" textAnchor="end">{value}%</text>
+              </g>
             ))}
 
-            {/* Connecting historical line */}
             {history.length > 1 && (
-              <path
-                d={history.reduce((acc, pt, idx) => {
-                  const x = 50 + (idx / history.length) * 580;
-                  const y = 170 - Math.min(100, pt.pct_resistant) * 1.5;
-                  return `${acc} ${idx === 0 ? 'M' : 'L'} ${x} ${y}`;
-                }, '')}
-                fill="none"
-                stroke="#3b82f6"
-                strokeWidth="2.5"
-              />
+              <polyline points={historyPath} fill="none" stroke="#3b82f6" strokeWidth="2.5" />
+            )}
+            {forecastPoints.length > 1 && (
+              <polyline points={forecastPath} fill="none" stroke="#10b981" strokeWidth="3" strokeDasharray="7 5" />
             )}
 
-            {/* Forecast dashed projection line */}
-            {history.length > 0 && (
-              <line
-                x1={50 + ((history.length - 1) / history.length) * 580}
-                y1={170 - Math.min(100, persVal) * 1.5}
-                x2={690}
-                y2={170 - Math.min(100, forecastVal) * 1.5}
-                stroke="#10b981"
-                strokeWidth="3"
-                strokeDasharray="6 4"
-              />
-            )}
-
-            {/* Historical Points */}
-            {history.map((pt, idx) => {
-              const x = 50 + (idx / history.length) * 580;
-              const y = 170 - Math.min(100, pt.pct_resistant) * 1.5;
-              const isNoisy = pt.number_tested < 30;
-              const r = Math.min(9, Math.max(4, Math.sqrt(pt.number_tested || 30) / 2));
+            {history.map((point) => {
+              const x = chartX(point.year);
+              const y = chartY(point.pct_resistant);
+              const smallSample = point.number_tested < 30;
+              const radius = Math.min(9, Math.max(4, Math.sqrt(point.number_tested || 30) / 2));
               return (
-                <g key={pt.year}>
-                  {isNoisy ? (
-                    <circle cx={x} cy={y} r={r} fill="transparent" stroke="#ef4444" strokeWidth="2.5" />
-                  ) : (
-                    <circle cx={x} cy={y} r={r} fill="#3b82f6" stroke="#fff" strokeWidth="1.5" />
-                  )}
-                  <text x={x} y="190" fill="var(--text-dim)" fontSize="11" textAnchor="middle">
-                    {pt.year}
-                  </text>
-                  <text x={x} y={y - 12} fill="#fff" fontSize="10" fontWeight="600" textAnchor="middle">
-                    {pt.pct_resistant.toFixed(1)}%
-                  </text>
+                <g key={point.year}>
+                  <circle cx={x} cy={y} r={radius} fill={smallSample ? 'transparent' : '#3b82f6'} stroke={smallSample ? '#ef4444' : '#fff'} strokeWidth="1.7" />
+                  <text x={x} y="190" fill="var(--text-dim)" fontSize="10" textAnchor="middle">{point.year}</text>
+                  <text x={x} y={y - 10} fill="#fff" fontSize="9" fontWeight="600" textAnchor="middle">{point.pct_resistant.toFixed(1)}%</text>
                 </g>
               );
             })}
 
-            {/* Forecast Star Marker */}
-            {prediction && (
-              <g>
-                <circle cx="690" cy={170 - Math.min(100, forecastVal) * 1.5} r="7" fill="#10b981" stroke="#fff" strokeWidth="2" />
-                <text x="690" y="190" fill="#34d399" fontSize="11" fontWeight="700" textAnchor="middle">
-                  {targetYear} (FC)
-                </text>
-                <text x="690" y={170 - Math.min(100, forecastVal) * 1.5 - 12} fill="#34d399" fontSize="11" fontWeight="700" textAnchor="middle">
-                  {forecastVal.toFixed(1)}%
-                </text>
-              </g>
-            )}
+            {forecastRows.filter((point) => Number.isFinite(point.forecast_pct)).map((point) => {
+              const x = chartX(point.year);
+              const y = chartY(point.forecast_pct);
+              return (
+                <g key={point.year}>
+                  <circle cx={x} cy={y} r="5.5" fill="#10b981" stroke="#fff" strokeWidth="1.5" />
+                  <text x={x} y="190" fill="#34d399" fontSize="10" fontWeight="700" textAnchor="middle">{point.year}</text>
+                  <text x={x} y={y - 10} fill="#34d399" fontSize="9" fontWeight="700" textAnchor="middle">{point.forecast_pct.toFixed(1)}%</text>
+                </g>
+              );
+            })}
           </svg>
         </div>
 
         <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 12, textAlign: 'center' }}>
-          ⚠️ Surveillance and research forecast only. Not for clinical treatment or antibiotic dose selection.
+          Each year is predicted independently from historical surveillance data; estimates are not chained together. Research use only, not treatment advice.
         </div>
-      </div>
 
+        <div className="data-table-container" style={{ marginTop: 18 }}>
+          <table className="data-table">
+            <thead>
+              <tr><th>Year</th><th>Estimated resistance</th><th>Category ({resistanceThreshold}% cutoff)</th><th>Historical check</th></tr>
+            </thead>
+            <tbody>
+              {forecastRows.map((point) => (
+                <tr key={point.year}>
+                  <td>{point.year}</td>
+                  <td>{Number.isFinite(point.forecast_pct) ? `${point.forecast_pct.toFixed(1)}%` : 'Unavailable'}</td>
+                  <td>
+                    {point.category ? (
+                      <span className="badge" style={{
+                        background: point.category === 'High Resistance' ? 'rgba(244, 63, 94, .16)' : 'rgba(16, 185, 129, .16)',
+                        color: point.category === 'High Resistance' ? '#fda4af' : '#6ee7b7',
+                      }}>
+                        {point.category}
+                      </span>
+                    ) : 'Not available'}
+                  </td>
+                  <td>
+                    {point.evaluation ? (
+                      <span title={`Compared with carrying forward the previous resistance value; ${point.evaluation.holdout_samples} held-out reports from ${point.evaluation.holdout_year}.`}>
+                        MAE {point.evaluation.holdout_mae_pct.toFixed(1)} pp vs {point.evaluation.persistence_mae_pct.toFixed(1)} pp baseline
+                        {point.evaluation.beats_persistence ? ' · better' : ' · not better'}
+                      </span>
+                    ) : 'No separate time holdout'}
+                  </td>
+                </tr>
+              ))}
+              {!forecastRows.length && <tr><td colSpan={4}>Forecasts are not available for this series.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <p className="explainer" style={{ marginTop: 12 }}>
+          Low Resistance means below {resistanceThreshold}% and High Resistance means {resistanceThreshold}% or above.
+          The historical check uses the latest available year as a time-ordered holdout; a model can perform worse than
+          carrying the last report forward. “No separate time holdout” means there are not enough distinct target years
+          to test that horizon.
+        </p>
+      </div>
       {/* Surveillance Alert Probability Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 24 }}>
         {/* High Risk Alarm */}
@@ -268,7 +309,7 @@ export default function ForecastExplorer({ scope, source }) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600 }}>HIGH-RISK ALARM PROBABILITY</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600 }}>ESTIMATED CHANCE OF THE HIGH-RISK CATEGORY</div>
               <div style={{ fontSize: '1.85rem', fontWeight: 700, color: '#fff', margin: '6px 0' }}>
                 {prediction ? `${(prediction.high_risk_probability * 100).toFixed(1)}%` : '--'}
               </div>
@@ -276,17 +317,19 @@ export default function ForecastExplorer({ scope, source }) {
             <span
               className="badge"
               style={{
-                background: prediction?.high_risk_probability >= 0.4 ? 'rgba(244, 63, 94, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-                color: prediction?.high_risk_probability >= 0.4 ? '#f87171' : '#34d399',
+                background: !prediction ? 'rgba(255, 255, 255, 0.08)' : prediction.high_risk_probability >= 0.4 ? 'rgba(244, 63, 94, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                color: !prediction ? 'var(--text-dim)' : prediction.high_risk_probability >= 0.4 ? '#f87171' : '#34d399',
               }}
             >
-              Cutoff: 30%
+              Model label: project-defined 30%+ category
             </span>
           </div>
-          <div style={{ fontSize: '0.82rem', color: prediction?.high_risk_probability >= 0.4 ? '#fca5a5' : '#a7f3d0' }}>
-            {prediction?.high_risk_probability >= 0.4
-              ? '⚠️ Above review threshold — candidate for audit'
-              : '✅ Below surveillance review threshold'}
+          <div style={{ fontSize: '0.82rem', color: !prediction ? 'var(--text-dim)' : prediction.high_risk_probability >= 0.4 ? '#fca5a5' : '#a7f3d0' }}>
+            {!prediction
+              ? 'Prediction unavailable'
+              : prediction.high_risk_probability >= 0.4
+                ? 'Above the 40% review score — check the underlying reports'
+                : 'Below the 40% review score'}
           </div>
         </div>
 
@@ -299,7 +342,7 @@ export default function ForecastExplorer({ scope, source }) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600 }}>RISING ACCELERATION PROBABILITY</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600 }}>ESTIMATED CHANCE OF A SIGNIFICANT RISE</div>
               <div style={{ fontSize: '1.85rem', fontWeight: 700, color: '#fff', margin: '6px 0' }}>
                 {prediction ? `${(prediction.rising_probability * 100).toFixed(1)}%` : '--'}
               </div>
@@ -307,28 +350,32 @@ export default function ForecastExplorer({ scope, source }) {
             <span
               className="badge"
               style={{
-                background: prediction?.rising_probability >= 0.2 ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-                color: prediction?.rising_probability >= 0.2 ? '#fbbf24' : '#34d399',
+                background: !prediction ? 'rgba(255, 255, 255, 0.08)' : prediction.rising_probability >= 0.2 ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                color: !prediction ? 'var(--text-dim)' : prediction.rising_probability >= 0.2 ? '#fbbf24' : '#34d399',
               }}
             >
-              +5 pp &amp; p &lt; 0.05
+              +5 points, statistical test, 30+ tests
             </span>
           </div>
-          <div style={{ fontSize: '0.82rem', color: prediction?.rising_probability >= 0.2 ? '#fde68a' : '#a7f3d0' }}>
-            {prediction?.rising_probability >= 0.2
-              ? '⚡ Acceleration signal detected — potential outbreak cluster'
-              : '✅ Stable trajectory (no significant acceleration)'}
+          <div style={{ fontSize: '0.82rem', color: !prediction ? 'var(--text-dim)' : prediction.rising_probability >= 0.2 ? '#fde68a' : '#a7f3d0' }}>
+            {!prediction
+              ? 'Prediction unavailable'
+              : prediction.rising_probability >= 0.2
+                ? 'Above the 20% review score — check the underlying reports'
+                : 'Below the 20% review score'}
           </div>
         </div>
 
         {/* Companion Point Forecast */}
         <div className="card">
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600 }}>NEXT-YEAR POINT FORECAST</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600 }}>NEXT-YEAR DIRECT ESTIMATE</div>
           <div style={{ fontSize: '1.85rem', fontWeight: 700, color: 'var(--accent-cyan)', margin: '6px 0' }}>
-            {forecastVal.toFixed(1)}%
+            {hasForecast ? `${forecastVal.toFixed(1)}%` : 'Unavailable'}
           </div>
           <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-            Persistence: {persVal.toFixed(1)}% ({forecastVal >= persVal ? `+${(forecastVal - persVal).toFixed(1)}` : (forecastVal - persVal).toFixed(1)} pp)
+            {hasForecast
+              ? `Last reported: ${persVal.toFixed(1)}% · change from last report: ${forecastVal >= persVal ? '+' : ''}${(forecastVal - persVal).toFixed(1)} percentage points`
+              : `Last reported: ${persVal.toFixed(1)}%`}
           </div>
         </div>
       </div>
@@ -337,7 +384,8 @@ export default function ForecastExplorer({ scope, source }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 20 }}>
         {/* Features Inspector */}
         <div className="card">
-          <h3 style={{ fontSize: '1.05rem', marginBottom: 14 }}>Feature Vector Values (Year {lastYear})</h3>
+          <h3 style={{ fontSize: '1.05rem', marginBottom: 14 }}>Information available through {lastYear}</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>These input values summarize available history; they are not separate test results.</p>
           <div className="data-table-container">
             <table className="data-table" style={{ fontSize: '0.8rem' }}>
               <thead>
@@ -364,13 +412,13 @@ export default function ForecastExplorer({ scope, source }) {
           </div>
         </div>
 
-        {/* Cross-Resistance Profile Bar Chart */}
+        {/* Other antibiotic resistance values */}
         <div className="card">
           <h3 style={{ fontSize: '1.05rem', marginBottom: 14 }}>
-            Co-Resistance Profile: {pathogen} in {iso3}
+          Other antibiotic resistance: {pathogen} in {iso3}
           </h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 16 }}>
-            Resistance across related antibiotic classes for this pathogen in the latest observed surveillance year.
+            Latest reported resistance percentages for this pathogen and other antibiotics in the selected source.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -400,16 +448,6 @@ export default function ForecastExplorer({ scope, source }) {
         </div>
       </div>
 
-      {/* Key Takeaway */}
-      <div className="takeaway-box">
-        <CheckCircle2 size={24} color="#34d399" style={{ flexShrink: 0, marginTop: 2 }} />
-        <div>
-          <h4>Key Takeaway: Calibrated Surveillance Alerting</h4>
-          <p>
-            Predicted probabilities quantify surveillance triage priority based on historical lag, multi-drug resistance burden, and peer regional deviations. The predicted alerts represent early public health triggers rather than clinical prescribing decisions.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

@@ -1,0 +1,502 @@
+.intelligence-page {
+  display: grid;
+  gap: 20px;
+}
+
+.intelligence-heading,
+.intelligence-map-header,
+.intelligence-card-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.intelligence-heading h1 {
+  margin: 8px 0 6px;
+  font-size: clamp(1.8rem, 3vw, 2.45rem);
+}
+
+.intelligence-heading p,
+.intelligence-map-header p,
+.intelligence-card-title p {
+  color: var(--text-muted);
+  font-size: .86rem;
+  line-height: 1.55;
+}
+
+.intelligence-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--accent-cyan);
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .13em;
+}
+
+.intelligence-source {
+  width: min(230px, 100%);
+  flex: 0 0 auto;
+}
+
+.intelligence-source label,
+.intelligence-filters label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.intelligence-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 15px;
+  border: 1px solid rgba(245, 158, 11, .26);
+  border-radius: var(--radius-md);
+  background: rgba(245, 158, 11, .07);
+  color: #f5d894;
+  font-size: .78rem;
+  line-height: 1.55;
+}
+
+.intelligence-note svg {
+  flex: 0 0 auto;
+  color: var(--accent-amber);
+}
+
+.intelligence-map-card {
+  padding: 22px;
+}
+
+.intelligence-map-header {
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.intelligence-map-header h2,
+.intelligence-card-title h2 {
+  margin-bottom: 5px;
+  font-size: 1.05rem;
+}
+
+.intelligence-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(170px, 1fr));
+  gap: 10px;
+  width: min(490px, 58%);
+}
+
+.intelligence-map-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 230px;
+  gap: 18px;
+  align-items: stretch;
+}
+
+.intelligence-map-wrap {
+  position: relative;
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(12, 72, 91, .2), transparent 70%),
+    #091321;
+}
+
+.intelligence-map {
+  display: block;
+  width: 100%;
+  min-height: 260px;
+}
+
+.intelligence-country {
+  stroke: rgba(183, 205, 218, .24);
+  stroke-width: .65px;
+  stroke-linejoin: round;
+  cursor: pointer;
+  transition: filter .16s ease, stroke .16s ease, opacity .16s ease;
+}
+
+.intelligence-country:hover,
+.intelligence-country:focus-visible {
+  stroke: #f2fbff;
+  stroke-width: 1.5px;
+  filter: brightness(1.25);
+  outline: none;
+}
+
+.intelligence-country.selected {
+  stroke: #fff;
+  stroke-width: 2px;
+  filter: brightness(1.28);
+}
+
+.intelligence-map-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  color: var(--text-muted);
+  font-size: .68rem;
+}
+
+.intelligence-map-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.intelligence-map-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.intelligence-map-legend i.no-report {
+  background: #1a293b;
+  border: 1px solid #536274;
+}
+
+.intelligence-map-attribution {
+  margin-top: 9px;
+  color: var(--text-dim);
+  text-align: center;
+  font-size: .62rem;
+}
+
+.intelligence-map-loading {
+  position: absolute;
+  z-index: 1;
+  inset: 12px 12px 58px;
+  display: grid;
+  place-items: center;
+  background: rgba(7, 11, 20, .58);
+  color: #d7edf3;
+  font-size: .85rem;
+}
+
+.intelligence-country-panel {
+  padding: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: rgba(6, 14, 26, .62);
+}
+
+.intelligence-country-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 15px;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(6, 182, 212, .12);
+  color: var(--accent-cyan);
+}
+
+.intelligence-panel-label {
+  color: var(--text-dim);
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+}
+
+.intelligence-country-panel h3 {
+  margin: 6px 0;
+  font-size: 1.15rem;
+}
+
+.intelligence-country-value {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.3rem;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.intelligence-country-panel > p {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: .76rem;
+}
+
+.intelligence-country-meta {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 11px 8px;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: .72rem;
+}
+
+.intelligence-country-meta span {
+  color: var(--text-dim);
+}
+
+.intelligence-country-meta strong {
+  max-width: 125px;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+}
+
+.intelligence-country-empty {
+  display: grid;
+  min-height: 190px;
+  align-content: center;
+  justify-items: center;
+  gap: 11px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.intelligence-country-empty svg {
+  color: var(--accent-cyan);
+}
+
+.intelligence-country-empty strong {
+  color: var(--text-main);
+  font-size: .85rem;
+}
+
+.intelligence-country-empty span {
+  font-size: .74rem;
+  line-height: 1.5;
+}
+
+.intelligence-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.intelligence-summary-card {
+  min-width: 0;
+  padding: 19px;
+}
+
+.intelligence-card-title {
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.intelligence-icon-hotspot,
+.intelligence-icon-rise {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(244, 63, 94, .12);
+  color: #fb7185;
+  font-weight: 800;
+}
+
+.intelligence-icon-rise {
+  background: rgba(245, 158, 11, .12);
+  color: #fbbf24;
+}
+
+.intelligence-ranking {
+  display: grid;
+  list-style: none;
+}
+
+.intelligence-ranking li + li {
+  border-top: 1px solid rgba(255,255,255,.055);
+}
+
+.intelligence-ranking button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--text-main);
+  cursor: pointer;
+  text-align: left;
+}
+
+.intelligence-ranking button:hover .intelligence-rank-country b {
+  color: var(--accent-cyan);
+}
+
+.intelligence-ranking button > strong {
+  flex: 0 0 auto;
+  font-size: .9rem;
+}
+
+.intelligence-rank-country {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.intelligence-rank-country b {
+  overflow: hidden;
+  font-size: .79rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.intelligence-rank-country small {
+  color: var(--text-dim);
+  font-size: .68rem;
+}
+
+.intelligence-ranking .intelligence-rise-value {
+  color: #fbbf24;
+}
+
+.intelligence-empty,
+.intelligence-footnote {
+  color: var(--text-muted);
+  font-size: .76rem;
+  line-height: 1.5;
+}
+
+.intelligence-footnote {
+  margin-top: 8px;
+  color: var(--text-dim);
+  font-size: .68rem;
+}
+
+.intelligence-pathogens {
+  padding: 20px;
+}
+
+.intelligence-pathogen-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+}
+
+.intelligence-pathogen {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  align-items: center;
+  gap: 3px 10px;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,.02);
+}
+
+.intelligence-pathogen-number {
+  grid-row: span 2;
+  color: var(--accent-cyan);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+}
+
+.intelligence-pathogen strong {
+  overflow: hidden;
+  font-size: .75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.intelligence-pathogen > span:nth-last-child(2),
+.intelligence-pathogen small {
+  color: var(--text-dim);
+  font-size: .66rem;
+}
+
+.intelligence-findings {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 18px;
+  padding: 19px 22px;
+  border: 1px solid rgba(6, 182, 212, .24);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(110deg, rgba(6, 182, 212, .09), rgba(15, 23, 42, .62) 45%);
+}
+
+.intelligence-findings-heading {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+
+.intelligence-findings-heading span {
+  color: var(--accent-cyan);
+  font-size: .64rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.intelligence-findings-heading strong {
+  font-size: .75rem;
+}
+
+.intelligence-findings ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 17px;
+  color: #c8d8e6;
+  font-size: .78rem;
+  line-height: 1.5;
+}
+
+.intelligence-disclaimer {
+  color: var(--text-dim);
+  font-size: .68rem;
+  line-height: 1.5;
+}
+
+.intelligence-error {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid rgba(248, 113, 113, .4);
+  border-radius: var(--radius-sm);
+  background: rgba(127, 29, 29, .2);
+  color: #fecaca;
+  font-size: .82rem;
+}
+
+@media (max-width: 900px) {
+  .intelligence-map-layout {
+    grid-template-columns: minmax(0, 1fr) 200px;
+  }
+
+  .intelligence-filters {
+    width: min(420px, 65%);
+  }
+}
+
+@media (max-width: 680px) {
+  .intelligence-heading,
+  .intelligence-map-header {
+    display: grid;
+  }
+
+  .intelligence-source,
+  .intelligence-filters {
+    width: 100%;
+  }
+
+  .intelligence-map-layout,
+  .intelligence-summary-grid,
+  .intelligence-findings {
+    grid-template-columns: 1fr;
+  }
+
+  .intelligence-map {
+    min-height: 190px;
+  }
+
+  .intelligence-country-empty {
+    min-height: 120px;
+  }
+}
