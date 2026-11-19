@@ -5,8 +5,6 @@ import {
   FileCode,
   FlaskConical,
   LineChart,
-  ClipboardList,
-  AlertTriangle,
   Radio,
   Globe2,
 } from 'lucide-react';
@@ -17,14 +15,7 @@ import EdaExplorer from './pages/EdaExplorer';
 import FeatureEngineering from './pages/FeatureEngineering';
 import ModelLab from './pages/ModelLab';
 import ForecastExplorer from './pages/ForecastExplorer';
-import SurveillanceWatchlist from './pages/SurveillanceWatchlist';
 import IntelligenceOverview from './pages/IntelligenceOverview';
-
-const DISCLAIMER_TEXT =
-  "Research and surveillance only—not for choosing treatment or antibiotic doses. 'High risk' and 'rising' are project alert categories, not patient-level clinical measures.";
-
-const COMBINED_NOTICE =
-  "Sources use different resistance definitions (GLASS: R; ECDC: I+R). Do not compare levels directly.";
 
 export default function App() {
   const [activePage, setActivePage] = useState('overview');
@@ -55,25 +46,16 @@ export default function App() {
     { id: 'features', label: '4. Model inputs', icon: FileCode },
     { id: 'models', label: '5. Model results', icon: FlaskConical },
     { id: 'forecast', label: '6. Five-year forecast', icon: LineChart },
-    { id: 'watchlist', label: '7. Results to review', icon: ClipboardList },
   ];
 
   return (
     <div>
-      {/* 1. Persistent Top Warning Banner */}
-      <div className="disclaimer-banner">
-        <AlertTriangle size={18} />
-        <div>
-          <strong>Disclaimer:</strong> {DISCLAIMER_TEXT}
-        </div>
-      </div>
-
       <div className="app-container">
         {/* 2. Left Sidebar */}
         <aside className="sidebar">
           <div className="sidebar-header">
             <div className="brand-title">
-              AMR-Sense <span className="badge">Phase 1</span>
+              AMR-Sense
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 4 }}>
               Antibiotic resistance surveillance
@@ -95,22 +77,6 @@ export default function App() {
               <option value="ECDC-derived">ECDC-derived (EARS-Net)</option>
             </select>
 
-            {scope === 'Combined' && (
-              <div
-                style={{
-                  marginTop: 10,
-                  padding: '8px 10px',
-                  background: 'rgba(245, 158, 11, 0.1)',
-                  border: '1px solid rgba(245, 158, 11, 0.25)',
-                  borderRadius: 6,
-                  fontSize: '0.74rem',
-                  color: '#fde68a',
-                  lineHeight: 1.4,
-                }}
-              >
-                ⚠️ {COMBINED_NOTICE}
-              </div>
-            )}
           </div>
 
           {/* Navigation Links */}
@@ -165,7 +131,6 @@ export default function App() {
           {activePage === 'features' && <FeatureEngineering scope={scope} source={sourceParam} />}
           {activePage === 'models' && <ModelLab scope={scope} />}
           {activePage === 'forecast' && <ForecastExplorer scope={scope} source={sourceParam} />}
-          {activePage === 'watchlist' && <SurveillanceWatchlist scope={scope} source={sourceParam} />}
         </main>
       </div>
     </div>

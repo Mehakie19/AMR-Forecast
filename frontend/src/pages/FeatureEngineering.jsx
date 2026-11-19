@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
-import { ShieldCheck, Search, Filter, Layers } from 'lucide-react';
 
-export default function FeatureEngineering({ scope, source }) {
+export default function FeatureEngineering({ source }) {
   const [activeTab, setActiveTab] = useState('dictionary');
   const [features, setFeatures] = useState([]);
   const [importance, setImportance] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('All');
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
     Promise.all([
       api.getFeaturesDictionary(),
       api.getFeaturesImportance(source),
@@ -21,7 +18,6 @@ export default function FeatureEngineering({ scope, source }) {
         setImportance(imp?.importance || imp?.items || imp?.data || []);
       })
       .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
   }, [source]);
 
   const groups = ['All', ...new Set(features.map((f) => f.group))];
@@ -49,8 +45,7 @@ export default function FeatureEngineering({ scope, source }) {
       <div className="tabs-header">
         {[
           { id: 'dictionary', label: '1. Feature guide' },
-          { id: 'leakage', label: '2. Past-data checks' },
-          { id: 'importance', label: '3. Feature associations' },
+          { id: 'importance', label: '2. Feature associations' },
         ].map((t) => (
           <button
             key={t.id}
@@ -114,64 +109,7 @@ export default function FeatureEngineering({ scope, source }) {
         </div>
       )}
 
-      {/* TAB 2: Leakage */}
-      {activeTab === 'leakage' && (
-        <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <ShieldCheck size={28} color="#34d399" />
-            <div>
-              <h3 style={{ fontSize: '1.2rem' }}>Checks that prevent looking into the future</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                A forecast for a year can only use information that would have been available before that year. Data preparation steps are fit on training years only.
-              </p>
-            </div>
-          </div>
-
-          <div className="data-table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Automated check</th>
-                  <th>What it checks</th>
-                  <th>Recorded result</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><code>test_leakage.py::test_lag1_matches_raw</code></td>
-                  <td>The previous year’s resistance value is used as the previous-year feature.</td>
-                  <td><span style={{ color: '#34d399', fontWeight: 600 }}>PASSED ✅</span></td>
-                </tr>
-                <tr>
-                  <td><code>test_leakage.py::test_permute_target_year_does_not_change_features</code></td>
-                  <td>Changing the year being predicted does not change features built from earlier data.</td>
-                  <td><span style={{ color: '#34d399', fontWeight: 600 }}>PASSED ✅</span></td>
-                </tr>
-                <tr>
-                  <td><code>test_leakage.py::test_years_observed_excludes_target</code></td>
-                  <td>The year being predicted is not counted as an observed year.</td>
-                  <td><span style={{ color: '#34d399', fontWeight: 600 }}>PASSED ✅</span></td>
-                </tr>
-                <tr>
-                  <td><code>test_leakage.py::test_region_median_uses_t_minus_1</code></td>
-                  <td>Regional comparisons use information from the preceding year, not the future year.</td>
-                  <td><span style={{ color: '#34d399', fontWeight: 600 }}>PASSED ✅</span></td>
-                </tr>
-                <tr>
-                  <td><code>test_splits.py::test_rolling_origin_order</code></td>
-                  <td>Training years come before the validation years.</td>
-                  <td><span style={{ color: '#34d399', fontWeight: 600 }}>PASSED ✅</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div className="explainer" style={{ marginTop: 14 }}>
-            These checks are automated tests in the project; the table describes what they check, not whether they have just run. See the project test instructions to run them.
-          </div>
-        </div>
-      )}
-
-      {/* TAB 3: Univariate Association */}
+      {/* TAB 2: Univariate Association */}
       {activeTab === 'importance' && (
         <div className="card">
           <h3 style={{ fontSize: '1.15rem', marginBottom: 12 }}>How each feature relates to the target</h3>

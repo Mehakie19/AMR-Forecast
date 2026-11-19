@@ -26,17 +26,16 @@ def test_vite_pages_exist():
         "FeatureEngineering.jsx",
         "ModelLab.jsx",
         "ForecastExplorer.jsx",
-        "SurveillanceWatchlist.jsx",
         "IntelligenceOverview.jsx",
     ]
     for page in required_pages:
         assert (pages_dir / page).exists(), f"Page {page} missing in frontend/src/pages"
 
 
-def test_vite_disclaimer_present():
+def test_vite_global_disclaimer_removed():
     app_jsx = (FRONTEND / "src" / "App.jsx").read_text(encoding="utf-8")
-    assert "Research and surveillance only" in app_jsx
-    assert "not for choosing treatment or antibiotic doses" in app_jsx
+    assert "disclaimer-banner" not in app_jsx
+    assert "Research and surveillance only" not in app_jsx
 
 
 def test_country_map_asset_exists():

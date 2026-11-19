@@ -171,6 +171,23 @@ python scripts/run_ui_data.py
 
 Run training and final-test scripts only when you intend to regenerate model artifacts and reports. The `models/FROZEN` marker protects the saved final-test workflow; do not remove it or re-run final evaluation casually. Dashboard data is read from the existing artifacts in `data/ui/`.
 
+### Generate report figures
+
+With the project's Python environment activated, run:
+
+```bash
+export PYTHONPATH=src
+python scripts/generate_report_figures.py
+```
+
+This writes PNG and PDF versions to `reports/figures/report/`:
+
+- Figure 7.6: GLASS held-out test-set precision-recall and ROC curves for the saved classifiers and persistence baseline.
+- Figure 7.7: validation performance by single decision-tree depth and L1/L2 Logistic Regression coefficient counts for `C = 0.01, 0.1, 1, 10`.
+- Figure 7.8: GLASS test-set precision, recall, F1, and false-alert rate over probability cutoffs. The marked Logistic Regression cutoff is selected using validation data.
+
+The tree-depth plot is a supplementary single-tree diagnostic; the project model comparison also includes Random Forest. L1 is the Lasso penalty; L2 is Ridge-type regularization, not Lasso. Numeric tree-depth and sparsity results are written to `reports/figures/report/figure_7_7_values.md`. The probability cutoff in Figure 7.8 is different from the 20%, 30%, and 50% resistance-label sensitivity experiment.
+
 ## Repository map
 
 ```text

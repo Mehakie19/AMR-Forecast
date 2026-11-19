@@ -244,7 +244,7 @@ export default function EdaExplorer({ scope, source }) {
         <div>
           <div className="card" style={{ marginBottom: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ fontSize: '1.15rem' }}>Yearly resistance patterns for a pathogen</h3>
+              <h3 style={{ fontSize: '1.15rem' }}>Line chart: Yearly resistance trends by pathogen</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }} title="A bacterium being monitored">Pathogen:</span>
                 <select
@@ -261,26 +261,30 @@ export default function EdaExplorer({ scope, source }) {
             </div>
 
             {/* SVG Trend Line Chart */}
-            <div style={{ position: 'relative', height: 260, background: 'rgba(15, 23, 42, 0.4)', borderRadius: 8, padding: '20px 20px 40px' }}>
-              <svg width="100%" height="100%" viewBox="0 0 800 200" preserveAspectRatio="none">
+            <p style={{ fontSize: '.82rem', color: 'var(--text-muted)', margin: '0 0 10px' }}>
+              Each point is the median of antibiotic-specific median resistance rates for the selected pathogen and reporting year.
+            </p>
+            <div style={{ position: 'relative', height: 290, background: 'rgba(15, 23, 42, 0.4)', borderRadius: 8, padding: '16px 20px 36px' }}>
+              <svg width="100%" height="100%" viewBox="0 0 800 230" preserveAspectRatio="none" role="img" aria-label="Line chart of yearly median resistance percentage by source">
+                <text x="18" y="100" fill="var(--text-muted)" fontSize="11" textAnchor="middle" transform="rotate(-90 18 100)">Median resistance (%)</text>
                 {/* Horizontal gridlines */}
                 {[0, 25, 50, 75, 100].map((v) => (
                   <g key={v}>
                     <line
-                      x1="40"
+                      x1="70"
                       y1={180 - v * 1.6}
                       x2="780"
                       y2={180 - v * 1.6}
                       stroke="rgba(255,255,255,0.06)"
                       strokeDasharray="4 4"
                     />
-                    <text x="35" y={180 - v * 1.6 + 3} fill="var(--text-dim)" fontSize="10" textAnchor="end">{v}%</text>
+                    <text x="64" y={180 - v * 1.6 + 3} fill="var(--text-dim)" fontSize="10" textAnchor="end">{v}%</text>
                   </g>
                 ))}
 
                 {/* Trajectory path */}
                 {trendTickYears.map((year) => {
-                  const x = 50 + ((year - trendMinYear) / Math.max(1, trendMaxYear - trendMinYear)) * 710;
+                  const x = 80 + ((year - trendMinYear) / Math.max(1, trendMaxYear - trendMinYear)) * 690;
                   return <g key={`tick-${year}`}>
                     <line x1={x} y1="20" x2={x} y2="180" stroke="rgba(255,255,255,0.03)" />
                     <text x={x} y="196" fill="var(--text-dim)" fontSize="10" textAnchor="middle">{year}</text>
@@ -288,15 +292,18 @@ export default function EdaExplorer({ scope, source }) {
                 })}
                 {[...new Set(annualTrends.map((pt) => pt.source))].map((series) => {
                   const points = annualTrends.filter((pt) => pt.source === series);
-                  const xFor = (year) => 50 + ((year - trendMinYear) / Math.max(1, trendMaxYear - trendMinYear)) * 710;
+                  const xFor = (year) => 80 + ((year - trendMinYear) / Math.max(1, trendMaxYear - trendMinYear)) * 690;
                   const color = series?.toLowerCase().includes('glass') ? 'var(--source-glass)' : 'var(--source-ecdc)';
                   return <g key={series}>
                     {points.length > 1 && <path d={points.map((pt, idx) => `${idx ? 'L' : 'M'} ${xFor(pt.year)} ${180 - Math.min(100, pt.median) * 1.6}`).join(' ')} fill="none" stroke={color} strokeWidth="3" />}
                     {points.map((pt) => <g key={`${series}-${pt.year}`}>
-                      <circle cx={xFor(pt.year)} cy={180 - Math.min(100, pt.median) * 1.6} r="4" fill={color} stroke="#fff" strokeWidth="1.5" />
+                      <circle cx={xFor(pt.year)} cy={180 - Math.min(100, pt.median) * 1.6} r="4" fill={color} stroke="#fff" strokeWidth="1.5">
+                        <title>{`${series} ${pt.year}: median resistance ${pt.median.toFixed(2)}%; ${pt.count} observations across antibiotic groups`}</title>
+                      </circle>
                     </g>)}
                   </g>;
                 })}
+                <text x="425" y="220" fill="var(--text-muted)" fontSize="11" textAnchor="middle">Reporting year</text>
               </svg>
             </div>
             <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginTop: 10, fontSize: '.8rem', color: 'var(--text-muted)' }}>
@@ -312,7 +319,7 @@ export default function EdaExplorer({ scope, source }) {
       {activeTab === 'yoy' && (
         <div>
           <div className="card" style={{ marginBottom: 24 }}>
-            <h3 style={{ fontSize: '1.15rem', marginBottom: 8 }}>Year-to-year changes in reported resistance</h3>
+            <h3 style={{ fontSize: '1.15rem', marginBottom: 8 }}>Line chart: Average year-to-year resistance change</h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 16 }}>
               For each country–pathogen–antibiotic series, the reported percentage in one year is compared with the previous year. The chart shows the average of those changes for each year, in percentage points.
             </p>
@@ -359,15 +366,16 @@ export default function EdaExplorer({ scope, source }) {
               const maxAbs = Math.max(1, ...rows.map((row) => Math.abs(row.change)));
               const limit = Math.ceil(maxAbs / 2) * 2;
               const yFor = (value) => 120 - ((value / limit) * 90);
-              const xFor = (year) => 45 + ((year - (years[0] ?? 0)) / Math.max(1, (years[years.length - 1] ?? 0) - (years[0] ?? 0))) * 710;
+              const xFor = (year) => 70 + ((year - (years[0] ?? 0)) / Math.max(1, (years[years.length - 1] ?? 0) - (years[0] ?? 0))) * 685;
               return (
                 <>
                   <div style={{ overflowX: 'auto', marginBottom: 16 }}>
-                    <svg viewBox="0 0 780 250" role="img" aria-label="Average year-to-year resistance change by reporting year" style={{ width: '100%', minWidth: 580, height: 250 }}>
+                    <svg viewBox="0 0 780 275" role="img" aria-label="Line chart of average year-to-year resistance change by reporting year and source" style={{ width: '100%', minWidth: 580, height: 275 }}>
+                      <text x="14" y="120" fill="var(--text-muted)" fontSize="10" textAnchor="middle" transform="rotate(-90 14 120)">Mean change (percentage points)</text>
                       {[-limit, 0, limit].map((value) => (
                         <g key={value}>
-                          <line x1="45" x2="755" y1={yFor(value)} y2={yFor(value)} stroke="rgba(255,255,255,.12)" strokeDasharray={value === 0 ? undefined : '4 4'} />
-                          <text x="40" y={yFor(value) - 5} fill="var(--text-dim)" fontSize="10" textAnchor="end">{value} pp</text>
+                          <line x1="70" x2="755" y1={yFor(value)} y2={yFor(value)} stroke="rgba(255,255,255,.12)" strokeDasharray={value === 0 ? undefined : '4 4'} />
+                          <text x="64" y={yFor(value) - 5} fill="var(--text-dim)" fontSize="10" textAnchor="end">{value} pp</text>
                         </g>
                       ))}
                       {years.map((year, index) => (index === 0 || index === years.length - 1 || index % Math.ceil(years.length / 6) === 0) && (
@@ -387,6 +395,7 @@ export default function EdaExplorer({ scope, source }) {
                           </g>
                         );
                       })}
+                      <text x="400" y="264" fill="var(--text-muted)" fontSize="11" textAnchor="middle">Reporting year</text>
                     </svg>
                   </div>
                   <div style={{ display: 'flex', gap: 18, fontSize: '.8rem', color: 'var(--text-muted)', marginBottom: 20 }}>
@@ -479,10 +488,6 @@ export default function EdaExplorer({ scope, source }) {
             ) : (
               <p style={{ color: 'var(--text-muted)' }}>Loading antibiotic pattern results...</p>
             )}
-
-            <div className="explainer">
-              Values near +1 mean two antibiotics’ reported resistance rates tend to move together; values near 0 mean little linear relationship, and negative values mean they tend to move in opposite directions. A relationship does not prove one resistance causes the other or that a patient’s infection is resistant to both.
-            </div>
           </div>
         </div>
       )}

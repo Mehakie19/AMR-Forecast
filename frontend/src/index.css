@@ -78,28 +78,10 @@ h1, h2, h3, h4, .font-heading {
   background: rgba(148, 163, 184, 0.5);
 }
 
-/* Persistent Banner */
-.disclaimer-banner {
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.12), rgba(239, 68, 68, 0.12));
-  border-bottom: 1px solid rgba(245, 158, 11, 0.3);
-  padding: 10px 24px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.85rem;
-  color: #fde68a;
-  line-height: 1.4;
-  backdrop-filter: blur(10px);
-}
-.disclaimer-banner svg {
-  color: #f59e0b;
-  flex-shrink: 0;
-}
-
 /* App Layout */
 .app-container {
   display: flex;
-  min-height: calc(100vh - 46px);
+  min-height: 100vh;
 }
 
 .sidebar {
@@ -112,7 +94,7 @@ h1, h2, h3, h4, .font-heading {
   flex-direction: column;
   position: sticky;
   top: 0;
-  height: calc(100vh - 46px);
+  height: 100vh;
   z-index: 40;
 }
 
@@ -437,12 +419,6 @@ button:focus-visible, select:focus-visible, input:focus-visible {
 .result-grid p { color: var(--text-muted); line-height: 1.6; font-size: .88rem; }
 .result-section { margin-top: 20px; }
 .result-section h4 { margin-bottom: 10px; text-transform: capitalize; }
-.result-json { margin-top: 16px; max-height: 480px; overflow: auto; white-space: pre-wrap; color: #cbd5e1; font-size: .78rem; }
-.confusion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.confusion-grid > div { display: grid; gap: 8px; padding: 16px; border: 1px solid var(--border-subtle); border-radius: 8px; background: rgba(255,255,255,.025); }
-.confusion-grid small { color: var(--text-muted); }
-.confusion-grid strong { font-size: 1.5rem; }
-.confusion-grid p { grid-column: 1 / -1; color: var(--text-muted); font-size: .8rem; }
 @media (max-width: 980px) {
   .sidebar { width: 225px; }
   .main-content { padding: 24px 22px 48px; }
@@ -456,7 +432,6 @@ button:focus-visible, select:focus-visible, input:focus-visible {
   .nav-link { flex: 0 0 auto; white-space: nowrap; }
   .sidebar > div:last-child { display: none; }
   .main-content { padding: 18px 14px 36px; }
-  .disclaimer-banner { padding: 10px 14px; font-size: .78rem; }
   .card { padding: 18px; }
   .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 10px; }
 }

@@ -64,7 +64,6 @@ export default function ForecastExplorer({ scope, source }) {
 
   const lastObs = history[history.length - 1];
   const lastYear = lastObs?.year || 2023;
-  const targetYear = lastYear + 1;
   const persVal = lastObs?.pct_resistant ?? 0;
   const hasForecast = Number.isFinite(prediction?.forecast_pct);
   const forecastVal = hasForecast ? prediction.forecast_pct : 0;
@@ -92,9 +91,6 @@ export default function ForecastExplorer({ scope, source }) {
         <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: 8 }}>
           Explore a five-year forecast
         </h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Choose a source and surveillance series to compare reported history with a separate direct model estimate for each of the next five years.
-        </p>
       </div>
       {predictionError && (
         <div
@@ -189,9 +185,6 @@ export default function ForecastExplorer({ scope, source }) {
             <h3 style={{ fontSize: '1.2rem', color: '#fff' }}>
               Reported history: <span style={{ color: 'var(--accent-cyan)' }}>{iso3}</span> — {pathogen} / {antibiotic}
             </h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Reported values through {lastYear}; separate estimates for {targetYear}–{lastYear + 5}
-            </span>
           </div>
           <div style={{ display: 'flex', gap: 12, fontSize: '0.78rem' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -253,14 +246,10 @@ export default function ForecastExplorer({ scope, source }) {
           </svg>
         </div>
 
-        <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 12, textAlign: 'center' }}>
-          Each year is predicted independently from historical surveillance data; estimates are not chained together. Research use only, not treatment advice.
-        </div>
-
         <div className="data-table-container" style={{ marginTop: 18 }}>
           <table className="data-table">
             <thead>
-              <tr><th>Year</th><th>Estimated resistance</th><th>Category ({resistanceThreshold}% cutoff)</th><th>Historical check</th></tr>
+              <tr><th>Year</th><th>Estimated resistance</th><th>Category ({resistanceThreshold}% cutoff)</th></tr>
             </thead>
             <tbody>
               {forecastRows.map((point) => (
@@ -277,26 +266,12 @@ export default function ForecastExplorer({ scope, source }) {
                       </span>
                     ) : 'Not available'}
                   </td>
-                  <td>
-                    {point.evaluation ? (
-                      <span title={`Compared with carrying forward the previous resistance value; ${point.evaluation.holdout_samples} held-out reports from ${point.evaluation.holdout_year}.`}>
-                        MAE {point.evaluation.holdout_mae_pct.toFixed(1)} pp vs {point.evaluation.persistence_mae_pct.toFixed(1)} pp baseline
-                        {point.evaluation.beats_persistence ? ' · better' : ' · not better'}
-                      </span>
-                    ) : 'No separate time holdout'}
-                  </td>
                 </tr>
               ))}
-              {!forecastRows.length && <tr><td colSpan={4}>Forecasts are not available for this series.</td></tr>}
+              {!forecastRows.length && <tr><td colSpan={3}>Forecasts are not available for this series.</td></tr>}
             </tbody>
           </table>
         </div>
-        <p className="explainer" style={{ marginTop: 12 }}>
-          Low Resistance means below {resistanceThreshold}% and High Resistance means {resistanceThreshold}% or above.
-          The historical check uses the latest available year as a time-ordered holdout; a model can perform worse than
-          carrying the last report forward. “No separate time holdout” means there are not enough distinct target years
-          to test that horizon.
-        </p>
       </div>
       {/* Surveillance Alert Probability Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 24 }}>
@@ -385,7 +360,6 @@ export default function ForecastExplorer({ scope, source }) {
         {/* Features Inspector */}
         <div className="card">
           <h3 style={{ fontSize: '1.05rem', marginBottom: 14 }}>Information available through {lastYear}</h3>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>These input values summarize available history; they are not separate test results.</p>
           <div className="data-table-container">
             <table className="data-table" style={{ fontSize: '0.8rem' }}>
               <thead>
@@ -417,10 +391,6 @@ export default function ForecastExplorer({ scope, source }) {
           <h3 style={{ fontSize: '1.05rem', marginBottom: 14 }}>
           Other antibiotic resistance: {pathogen} in {iso3}
           </h3>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 16 }}>
-            Latest reported resistance percentages for this pathogen and other antibiotics in the selected source.
-          </p>
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {prediction?.cross_resistance_context?.length ? (
               prediction.cross_resistance_context.map(({ antibiotic: abx, pct_resistant: val, number_tested: n }) => (

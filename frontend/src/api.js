@@ -74,12 +74,5 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
-  getWatchlist: (params = {}) => {
-    const sp = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => {
-      if (v !== undefined && v !== null && v !== '') sp.append(k, v);
-    });
-    return fetchJson(`/watchlist?${sp.toString()}`);
-  },
   getMethods: () => fetchJson('/methods'),
 };

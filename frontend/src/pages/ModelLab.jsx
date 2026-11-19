@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
-import { Award, TrendingUp, Sliders, ChevronRight, BarChart2 } from 'lucide-react';
 
 export default function ModelLab({ scope }) {
   const [config, setConfig] = useState('glass');
@@ -12,7 +11,6 @@ export default function ModelLab({ scope }) {
   const [curves, setCurves] = useState(null);
   const [selectedModel, setSelectedModel] = useState('xgb');
   const [segments, setSegments] = useState(null);
-  const [pooledVsSep, setPooledVsSep] = useState('');
   const [regressors, setRegressors] = useState([]);
 
   useEffect(() => {
@@ -39,7 +37,6 @@ export default function ModelLab({ scope }) {
 
   useEffect(() => {
     api.getResultsSegments(config, target).then((d) => setSegments(d)).catch(console.error);
-    api.getResultsPooledVsSeparate().then((d) => setPooledVsSep(d?.markdown || '')).catch(console.error);
   }, [config, target]);
 
   return (
@@ -92,7 +89,6 @@ export default function ModelLab({ scope }) {
           >
             <option value="high_risk_next">High-Risk Next Year (T ≥ 30%)</option>
             <option value="rising_next">Rising Next Year (+5 pp &amp; p &lt; 0.05)</option>
-            <option value="y_reg">Continuous Resistance % (Regression)</option>
           </select>
         </div>
 
@@ -118,7 +114,7 @@ export default function ModelLab({ scope }) {
           { id: 'comparison', label: '1. Compare models' },
           { id: 'curves', label: '2. Curves and score quality' },
           { id: 'segments', label: '3. Results by group' },
-          { id: 'pooling', label: '4. Sources and thresholds' },
+          { id: 'pooling', label: '4. Threshold sensitivity' },
           { id: 'regressors', label: '5. Percentage estimates' },
         ].map((t) => (
           <button
@@ -303,16 +299,6 @@ export default function ModelLab({ scope }) {
                 <text x="10" y="105" fill="var(--text-muted)" fontSize="10" transform="rotate(-90 10 105)">Share of events observed</text>
               </svg> : <p className="explainer">Calibration data is unavailable for this curve.</p>}
             </section>
-            <section className="result-panel">
-              <h4>Results at the chosen score cutoff</h4>
-              {curves?.confusion_matrix ? <div className="confusion-grid">
-                <div title="Correctly not flagged"><small>Correctly not flagged</small><strong>{curves.confusion_matrix.tn}</strong></div>
-                <div title="Flagged, but the event did not occur"><small>False alert</small><strong>{curves.confusion_matrix.fp}</strong></div>
-                <div title="Event occurred, but was not flagged"><small>Missed event</small><strong>{curves.confusion_matrix.fn}</strong></div>
-                <div title="Correctly flagged"><small>Correctly flagged</small><strong>{curves.confusion_matrix.tp}</strong></div>
-                <p>Score cutoff: {Number(curves.confusion_matrix.threshold).toFixed(2)}</p>
-              </div> : <p className="explainer">Confusion matrix is unavailable for this curve.</p>}
-            </section>
           </div>
         </div>
       )}
@@ -330,73 +316,17 @@ export default function ModelLab({ scope }) {
       {/* TAB 4: Sources and Thresholds */}
       {activeTab === 'pooling' && (
         <div className="card">
-          <h3 style={{ fontSize: '1.15rem', marginBottom: 16 }}>Does combining the two sources help?</h3>
+          <h3 style={{ fontSize: '1.15rem', marginBottom: 12 }}>High-resistance threshold sensitivity</h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 16 }}>
-            The tables below are fixed benchmark results from the project evaluation. They do not change with the source, target, or year selectors above.
+            This test-set analysis checks how classification results change when the resistance label is defined using 20%, 30%, or 50% resistance. It is separate from the model probability cutoff.
           </p>
-          <details className="explainer"><summary>Open technical benchmark report</summary>
-            <pre className="result-json">{pooledVsSep || 'No pooled comparison report is available.'}</pre>
-          </details>
-
-          <div className="data-table-container" style={{ marginBottom: 24 }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Test Slice</th>
-                  <th>Target</th>
-                  <th>Dedicated Model PR-AUC (95% CI)</th>
-                  <th>Pooled Model PR-AUC (95% CI)</th>
-                  <th>Difference (Pooled - Ded) [95% CI]</th>
-                  <th>Empirical Verdict</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><strong>GLASS (2023)</strong></td>
-                  <td>high_risk_next</td>
-                  <td>0.9886 [0.9790, 0.9952]</td>
-                  <td>0.9896 [0.9785, 0.9971]</td>
-                  <td>+0.0010 [-0.0043, +0.0065]</td>
-                  <td><span style={{ color: 'var(--text-muted)' }}>No significant difference</span></td>
-                </tr>
-                <tr>
-                  <td><strong>ECDC (2018–2019)</strong></td>
-                  <td>high_risk_next</td>
-                  <td>0.9834 [0.9505, 0.9963]</td>
-                  <td>0.9832 [0.9495, 0.9964]</td>
-                  <td>-0.0003 [-0.0016, +0.0012]</td>
-                  <td><span style={{ color: 'var(--text-muted)' }}>No significant difference</span></td>
-                </tr>
-                <tr>
-                  <td><strong>GLASS (2023)</strong></td>
-                  <td>rising_next</td>
-                  <td>0.2561 [0.1418, 0.4538]</td>
-                  <td>0.2522 [0.1439, 0.4231]</td>
-                  <td>-0.0040 [-0.0621, +0.0398]</td>
-                  <td><span style={{ color: 'var(--text-muted)' }}>No significant difference</span></td>
-                </tr>
-                <tr>
-                  <td><strong>ECDC (2018–2019)</strong></td>
-                  <td>rising_next</td>
-                  <td>0.1172 [0.0826, 0.1896]</td>
-                  <td>0.1694 [0.1243, 0.2508]</td>
-                  <td style={{ color: '#34d399', fontWeight: 600 }}>+0.0522 [+0.0160, +0.0869]</td>
-                  <td><span style={{ color: '#34d399', fontWeight: 700 }}>Pooling significantly helped ✅</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <h4 style={{ fontSize: '0.95rem', marginBottom: 10, color: 'var(--accent-cyan)' }}>
-            How changing the high-resistance cutoff changes the results
-          </h4>
           <div className="data-table-container">
             <table className="data-table">
               <thead>
                 <tr>
                   <th>Config</th>
-                  <th>Threshold T</th>
-                  <th>Test Prevalence</th>
+                  <th>Resistance label cutoff</th>
+                  <th>Positive-label prevalence</th>
                   <th>Persistence PR-AUC</th>
                   <th>LR PR-AUC</th>
                   <th>XGBoost PR-AUC</th>
@@ -409,6 +339,9 @@ export default function ModelLab({ scope }) {
                 <tr><td>ECDC</td><td>T = 20%</td><td>41.4%</td><td>0.9039</td><td>0.9809</td><td>0.9785</td></tr>
                 <tr><td>ECDC</td><td>T = 30%</td><td>33.4%</td><td>0.9298</td><td>0.9834</td><td>0.9829</td></tr>
                 <tr><td>ECDC</td><td>T = 50%</td><td>20.9%</td><td>0.9172</td><td>0.9777</td><td>0.7810</td></tr>
+                <tr><td>Pooled</td><td>T = 20%</td><td>51.5%</td><td>0.9348</td><td>0.9880</td><td>0.9862</td></tr>
+                <tr><td>Pooled</td><td>T = 30%</td><td>42.8%</td><td>0.9401</td><td>0.9867</td><td>0.9873</td></tr>
+                <tr><td>Pooled</td><td>T = 50%</td><td>28.1%</td><td>0.8879</td><td>0.9715</td><td>0.9375</td></tr>
               </tbody>
             </table>
           </div>
